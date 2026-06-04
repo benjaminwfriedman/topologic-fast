@@ -1,0 +1,14 @@
+/Users/benjaminfriedman/repos/topologic-fast/target/debug/deps/serde-cb0bc1aeb3835ef1.d: /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/benjaminfriedman/repos/topologic-fast/target/debug/build/serde-74e88221a52d81b7/out/private.rs
+
+/Users/benjaminfriedman/repos/topologic-fast/target/debug/deps/libserde-cb0bc1aeb3835ef1.rlib: /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/benjaminfriedman/repos/topologic-fast/target/debug/build/serde-74e88221a52d81b7/out/private.rs
+
+/Users/benjaminfriedman/repos/topologic-fast/target/debug/deps/libserde-cb0bc1aeb3835ef1.rmeta: /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/benjaminfriedman/repos/topologic-fast/target/debug/build/serde-74e88221a52d81b7/out/private.rs
+
+/Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/Users/benjaminfriedman/repos/topologic-fast/target/debug/build/serde-74e88221a52d81b7/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/benjaminfriedman/repos/topologic-fast/target/debug/build/serde-74e88221a52d81b7/out

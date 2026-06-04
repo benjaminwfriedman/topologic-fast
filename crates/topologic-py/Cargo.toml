@@ -1,0 +1,17 @@
+[package]
+name = "topologic-py"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Python bindings for topologic-fast"
+
+[lib]
+name = "topologic_fast"
+crate-type = ["cdylib"]
+
+[dependencies]
+topologic-core = { path = "../topologic-core" }
+pyo3 = { workspace = true }
+numpy = { workspace = true }
+once_cell = "1.19"
+parking_lot = { workspace = true }

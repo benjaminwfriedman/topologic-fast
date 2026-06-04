@@ -1,0 +1,29 @@
+[package]
+name = "topologic-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "High-performance non-manifold topology library"
+
+[dependencies]
+nalgebra = { workspace = true }
+glam = { workspace = true }
+parry3d = { workspace = true }
+rayon = { workspace = true }
+smallvec = { workspace = true }
+hashbrown = { workspace = true }
+indexmap = { workspace = true }
+parking_lot = { workspace = true }
+crossbeam = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+bytemuck = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }
+criterion = { workspace = true }
+
+[[bench]]
+name = "topology_bench"
+harness = false

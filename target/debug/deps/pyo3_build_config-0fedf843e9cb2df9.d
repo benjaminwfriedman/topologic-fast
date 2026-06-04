@@ -1,0 +1,14 @@
+/Users/benjaminfriedman/repos/topologic-fast/target/debug/deps/pyo3_build_config-0fedf843e9cb2df9.d: /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/lib.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/errors.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/impl_.rs /Users/benjaminfriedman/repos/topologic-fast/target/debug/build/pyo3-build-config-9800eb542230d3d7/out/pyo3-build-config-file.txt /Users/benjaminfriedman/repos/topologic-fast/target/debug/build/pyo3-build-config-9800eb542230d3d7/out/pyo3-build-config.txt
+
+/Users/benjaminfriedman/repos/topologic-fast/target/debug/deps/libpyo3_build_config-0fedf843e9cb2df9.rlib: /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/lib.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/errors.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/impl_.rs /Users/benjaminfriedman/repos/topologic-fast/target/debug/build/pyo3-build-config-9800eb542230d3d7/out/pyo3-build-config-file.txt /Users/benjaminfriedman/repos/topologic-fast/target/debug/build/pyo3-build-config-9800eb542230d3d7/out/pyo3-build-config.txt
+
+/Users/benjaminfriedman/repos/topologic-fast/target/debug/deps/libpyo3_build_config-0fedf843e9cb2df9.rmeta: /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/lib.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/errors.rs /Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/impl_.rs /Users/benjaminfriedman/repos/topologic-fast/target/debug/build/pyo3-build-config-9800eb542230d3d7/out/pyo3-build-config-file.txt /Users/benjaminfriedman/repos/topologic-fast/target/debug/build/pyo3-build-config-9800eb542230d3d7/out/pyo3-build-config.txt
+
+/Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/lib.rs:
+/Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/errors.rs:
+/Users/benjaminfriedman/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.23.5/src/impl_.rs:
+/Users/benjaminfriedman/repos/topologic-fast/target/debug/build/pyo3-build-config-9800eb542230d3d7/out/pyo3-build-config-file.txt:
+/Users/benjaminfriedman/repos/topologic-fast/target/debug/build/pyo3-build-config-9800eb542230d3d7/out/pyo3-build-config.txt:
+
+# env-dep:CARGO_PKG_VERSION=0.23.5
+# env-dep:OUT_DIR=/Users/benjaminfriedman/repos/topologic-fast/target/debug/build/pyo3-build-config-9800eb542230d3d7/out
