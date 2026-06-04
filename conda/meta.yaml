@@ -1,0 +1,52 @@
+{% set name = "topologic-fast" %}
+{% set version = "0.1.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  # sha256: UPDATE_WITH_ACTUAL_SHA256_AFTER_PYPI_RELEASE
+
+build:
+  number: 0
+  skip: true  # [py<39]
+  script: {{ PYTHON }} -m pip install . -vv --no-build-isolation
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
+    - {{ stdlib("c") }}
+    - cargo-bundle-licenses
+    - maturin >=1.5,<2.0
+  host:
+    - python
+    - pip
+    - maturin >=1.5,<2.0
+    - rust >=1.75.0
+  run:
+    - python
+
+test:
+  imports:
+    - topologic_fast
+  commands:
+    - python -c "import topologic_fast as tf; v = tf.Vertex.ByCoordinates(0, 0, 0); print(v)"
+
+about:
+  home: https://github.com/YOUR_USERNAME/topologic-fast
+  summary: High-performance non-manifold topology library
+  description: |
+    topologic-fast is a high-performance Rust implementation of non-manifold
+    topology operations for architectural and engineering applications.
+    It provides Python bindings via PyO3.
+  license: AGPL-3.0-or-later
+  license_family: AGPL
+  license_file: LICENSE
+  dev_url: https://github.com/YOUR_USERNAME/topologic-fast
+
+extra:
+  recipe-maintainers:
+    - YOUR_GITHUB_USERNAME
