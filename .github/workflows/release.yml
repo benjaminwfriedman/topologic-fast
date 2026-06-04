@@ -51,14 +51,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.target }}
 
-      - name: Install Rust
-        uses: dtolnay/rust-action@stable
-
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           args: --release --out dist -i python
           sccache: 'true'
+          rust-toolchain: stable
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
