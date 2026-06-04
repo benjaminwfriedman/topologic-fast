@@ -28,6 +28,7 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: 'true'
           manylinux: auto
+          rust-toolchain: stable
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -47,6 +48,9 @@ jobs:
         with:
           python-version: '3.12'
           architecture: ${{ matrix.target }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -78,6 +82,7 @@ jobs:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter
           sccache: 'true'
+          rust-toolchain: stable
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -95,6 +100,7 @@ jobs:
         with:
           command: sdist
           args: --out dist
+          rust-toolchain: stable
 
       - name: Upload sdist
         uses: actions/upload-artifact@v4
