@@ -1,0 +1,111 @@
+"""The lean fast topologicpy-compatible native API (the performance path).
+
+Verifies the native ``tf.*`` methods (1) match topologicpy's results, (2) work
+both as ``Class.Method(obj)`` and ``obj.Method()``, and (3) are substantially
+faster than topologicpy (the whole point — see _native_api.py).
+"""
+import time
+
+import pytest
+
+tf = pytest.importorskip("topologic_fast")
+pytest.importorskip("topologicpy")
+
+from topologicpy.Core import Core  # noqa: E402
+from topologicpy.Vertex import Vertex as TV  # noqa: E402
+from topologicpy.Edge import Edge as TE  # noqa: E402
+from topologicpy.Cell import Cell as TC  # noqa: E402
+from topologicpy.Topology import Topology as TT  # noqa: E402
+
+Core.ResetBackend()  # native API must not depend on the backend swap
+
+
+def _fbox():
+    return tf.Cell.Box(0, 0, 0, 2, 3, 4)
+
+
+def _tbox():
+    return TT.Translate(TC.Prism(width=2, length=3, height=4), 1, 1.5, 2)
+
+
+def test_vertex_methods_match():
+    fa, fb = tf.Vertex.ByCoordinates(1, 2, 3), tf.Vertex.ByCoordinates(4, 6, 3)
+    ta, tb = TV.ByCoordinates(1, 2, 3), TV.ByCoordinates(4, 6, 3)
+    assert tf.Vertex.Coordinates(fa) == TV.Coordinates(ta)
+    assert tf.Vertex.Coordinates(fa, "zyx") == TV.Coordinates(ta, "zyx")
+    assert tf.Vertex.X(fa, mantissa=2) == TV.X(ta, mantissa=2)
+    assert tf.Vertex.Distance(fa, fb) == TV.Distance(ta, tb)
+
+
+def test_both_call_styles_work():
+    v = tf.Vertex.ByCoordinates(1, 2, 3)
+    assert tf.Vertex.Coordinates(v) == v.Coordinates() == [1.0, 2.0, 3.0]
+    box = _fbox()
+    assert tf.Cell.Volume(box) == box.Volume() == 24.0
+
+
+def test_edge_cell_methods_match():
+    fa, fb = tf.Vertex.ByCoordinates(1, 2, 3), tf.Vertex.ByCoordinates(4, 6, 3)
+    ta, tb = TV.ByCoordinates(1, 2, 3), TV.ByCoordinates(4, 6, 3)
+    fe = tf.Edge.ByStartVertexEndVertex(fa, fb)
+    te = TE.ByStartVertexEndVertex(ta, tb)
+    assert tf.Edge.Length(fe) == round(TE.Length(te), 6)
+    assert tf.Cell.Volume(_fbox()) == TC.Volume(_tbox())
+
+
+def test_cell_prism_matches():
+    from topologicpy.Cell import Cell as TC2
+    for placement in ["center", "bottom", "lowerleft"]:
+        fp = tf.Cell.Prism(width=2, length=3, height=4, placement=placement)
+        tp = TC.Prism(width=2, length=3, height=4, placement=placement)
+        assert tf.Cell.Volume(fp) == TC2.Volume(tp) == 24.0
+        f_com = [round(c, 5) for c in tf.Vertex.Coordinates(tf.Topology.Centroid(fp))]
+        t_com = [round(c, 5) for c in TV.Coordinates(TT.Centroid(tp))]
+        assert f_com == t_com
+        assert len(tf.Topology.Faces(fp)) == len(TT.Faces(tp)) == 6
+
+
+def test_edge_byvertices_both_forms():
+    v1, v2 = tf.Vertex.ByCoordinates(0, 0, 0), tf.Vertex.ByCoordinates(3, 4, 0)
+    assert tf.Edge.Length(tf.Edge.ByVertices([v1, v2])) == 5.0
+    assert tf.Edge.Length(tf.Edge.ByVertices(v1, v2)) == 5.0
+    # tolerance arg (topologicpy signature) is accepted
+    assert tf.Edge.Length(tf.Edge.ByStartVertexEndVertex(v1, v2, 0.0001)) == 5.0
+
+
+def test_face_external_boundary_both_styles():
+    face = tf.Topology.Faces(tf.Cell.Box(0, 0, 0, 1, 1, 1))[0]
+    assert len(tf.Topology.Vertices(tf.Face.ExternalBoundary(face))) == 4
+    assert len(tf.Topology.Vertices(face.ExternalBoundary())) == 4
+
+
+def test_cell_measures_match():
+    from topologicpy.Cell import Cell as TC2
+    fbox, tbox = _fbox(), _tbox()
+    assert tf.Cell.Area(fbox) == TC2.Area(tbox) == 52.0
+    assert tf.Cell.Compactness(fbox) == round(TC2.Compactness(tbox), 6)
+    # ByFaces rebuilds an equivalent cell
+    rebuilt = tf.Cell.ByFaces(tf.Topology.Faces(fbox))
+    assert round(rebuilt.Volume(), 3) == 24.0
+
+
+def _bench(op, n=4000):
+    op()
+    t0 = time.perf_counter()
+    for _ in range(n):
+        op()
+    return (time.perf_counter() - t0) / n
+
+
+@pytest.mark.parametrize("name,native,reference", [
+    ("Cell.Volume", lambda b: tf.Cell.Volume(b[0]), lambda b: TC.Volume(b[1])),
+    ("Vertex.Coordinates",
+     lambda b: tf.Vertex.Coordinates(tf.Vertex.ByCoordinates(1, 2, 3)),
+     lambda b: TV.Coordinates(TV.ByCoordinates(1, 2, 3))),
+])
+def test_native_is_faster(name, native, reference):
+    b = (_fbox(), _tbox())
+    t_native = _bench(lambda: native(b))
+    t_ref = _bench(lambda: reference(b))
+    # The native path must be clearly faster (it is typically 5-200x).
+    assert t_native < t_ref, f"{name}: native {t_native*1e6:.2f}us not < topologicpy {t_ref*1e6:.2f}us"

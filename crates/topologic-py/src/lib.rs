@@ -2224,6 +2224,61 @@ impl PyCellComplex {
 }
 
 /// Topology operations module
+/// Extract a generic `TopologyHandle` from any topologic_fast topology object.
+fn any_to_handle(obj: &Bound<'_, PyAny>) -> PyResult<TopologyHandle> {
+    if let Ok(x) = obj.extract::<PyVertex>() { return Ok(TopologyHandle::Vertex(x.handle)); }
+    if let Ok(x) = obj.extract::<PyEdge>() { return Ok(TopologyHandle::Edge(x.handle)); }
+    if let Ok(x) = obj.extract::<PyWire>() { return Ok(TopologyHandle::Wire(x.handle)); }
+    if let Ok(x) = obj.extract::<PyFace>() { return Ok(TopologyHandle::Face(x.handle)); }
+    if let Ok(x) = obj.extract::<PyShell>() { return Ok(TopologyHandle::Shell(x.handle)); }
+    if let Ok(x) = obj.extract::<PyCell>() { return Ok(TopologyHandle::Cell(x.handle)); }
+    if let Ok(x) = obj.extract::<PyCellComplex>() { return Ok(TopologyHandle::CellComplex(x.handle)); }
+    if let Ok(x) = obj.extract::<PyCluster>() { return Ok(TopologyHandle::Cluster(x.handle)); }
+    Err(PyValueError::new_err("Topology - Error: the input is not a topology object."))
+}
+
+/// Wrap a generic `TopologyHandle` back into the matching Python topology object.
+fn handle_to_object(py: Python<'_>, h: TopologyHandle) -> PyResult<PyObject> {
+    Ok(match h {
+        TopologyHandle::Vertex(x) => Py::new(py, PyVertex { handle: x })?.into_any(),
+        TopologyHandle::Edge(x) => Py::new(py, PyEdge { handle: x })?.into_any(),
+        TopologyHandle::Wire(x) => Py::new(py, PyWire { handle: x })?.into_any(),
+        TopologyHandle::Face(x) => Py::new(py, PyFace { handle: x })?.into_any(),
+        TopologyHandle::Shell(x) => Py::new(py, PyShell { handle: x })?.into_any(),
+        TopologyHandle::Cell(x) => Py::new(py, PyCell { handle: x })?.into_any(),
+        TopologyHandle::CellComplex(x) => Py::new(py, PyCellComplex { handle: x })?.into_any(),
+        TopologyHandle::Cluster(x) => Py::new(py, PyCluster { handle: x })?.into_any(),
+    })
+}
+
+/// topologicpy-compatible type name for a topology handle.
+fn handle_type_name(h: &TopologyHandle) -> &'static str {
+    match h {
+        TopologyHandle::Vertex(_) => "Vertex",
+        TopologyHandle::Edge(_) => "Edge",
+        TopologyHandle::Wire(_) => "Wire",
+        TopologyHandle::Face(_) => "Face",
+        TopologyHandle::Shell(_) => "Shell",
+        TopologyHandle::Cell(_) => "Cell",
+        TopologyHandle::CellComplex(_) => "CellComplex",
+        TopologyHandle::Cluster(_) => "Cluster",
+    }
+}
+
+/// topologicpy-compatible integer type code (bitmask) for a topology handle.
+fn handle_type_code(h: &TopologyHandle) -> i64 {
+    match h {
+        TopologyHandle::Vertex(_) => 1,
+        TopologyHandle::Edge(_) => 2,
+        TopologyHandle::Wire(_) => 4,
+        TopologyHandle::Face(_) => 8,
+        TopologyHandle::Shell(_) => 16,
+        TopologyHandle::Cell(_) => 32,
+        TopologyHandle::CellComplex(_) => 64,
+        TopologyHandle::Cluster(_) => 128,
+    }
+}
+
 #[pyclass(name = "Topology")]
 pub struct PyTopology;
 
@@ -2266,6 +2321,279 @@ impl PyTopology {
             }
         }
         Err(PyValueError::new_err(result.message))
+    }
+
+    // ----- Generic, type-dispatching API (topologicpy-compatible) ---------
+
+    /// Get the vertices of any topology.
+    #[staticmethod]
+    fn Vertices(topology: &Bound<'_, PyAny>) -> PyResult<Vec<PyVertex>> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        Ok(topologic_core::topology::Navigate::vertices(&store, h)
+            .into_iter().map(|x| PyVertex { handle: x }).collect())
+    }
+
+    /// Get the edges of any topology.
+    #[staticmethod]
+    fn Edges(topology: &Bound<'_, PyAny>) -> PyResult<Vec<PyEdge>> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        Ok(topologic_core::topology::Navigate::edges(&store, h)
+            .into_iter().map(|x| PyEdge { handle: x }).collect())
+    }
+
+    /// Get the wires of any topology.
+    #[staticmethod]
+    fn Wires(topology: &Bound<'_, PyAny>) -> PyResult<Vec<PyWire>> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        Ok(topologic_core::topology::Navigate::wires(&store, h)
+            .into_iter().map(|x| PyWire { handle: x }).collect())
+    }
+
+    /// Get the faces of any topology.
+    #[staticmethod]
+    fn Faces(topology: &Bound<'_, PyAny>) -> PyResult<Vec<PyFace>> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        Ok(topologic_core::topology::Navigate::faces(&store, h)
+            .into_iter().map(|x| PyFace { handle: x }).collect())
+    }
+
+    /// Get the shells of any topology.
+    #[staticmethod]
+    fn Shells(topology: &Bound<'_, PyAny>) -> PyResult<Vec<PyShell>> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        Ok(topologic_core::topology::Navigate::shells(&store, h)
+            .into_iter().map(|x| PyShell { handle: x }).collect())
+    }
+
+    /// Get the cells of any topology.
+    #[staticmethod]
+    fn Cells(topology: &Bound<'_, PyAny>) -> PyResult<Vec<PyCell>> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        Ok(topologic_core::topology::Navigate::cells(&store, h)
+            .into_iter().map(|x| PyCell { handle: x }).collect())
+    }
+
+    /// Get the cell complexes of any topology.
+    #[staticmethod]
+    fn CellComplexes(topology: &Bound<'_, PyAny>) -> PyResult<Vec<PyCellComplex>> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        Ok(topologic_core::topology::Navigate::cell_complexes(&store, h)
+            .into_iter().map(|x| PyCellComplex { handle: x }).collect())
+    }
+
+    /// Get the sub-topologies of the given type ("vertex", "edge", "wire",
+    /// "face", "shell", "cell", "cellcomplex"; singular or plural).
+    #[staticmethod]
+    #[pyo3(signature = (topology, subTopologyType="vertex"))]
+    #[allow(non_snake_case)]
+    fn SubTopologies(py: Python<'_>, topology: &Bound<'_, PyAny>, subTopologyType: &str) -> PyResult<Vec<PyObject>> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        use topologic_core::topology::Navigate;
+        let t = subTopologyType.to_lowercase();
+        let handles: Vec<TopologyHandle> = match t.as_str() {
+            "vertex" | "vertices" => Navigate::vertices(&store, h).into_iter().map(TopologyHandle::Vertex).collect(),
+            "edge" | "edges" => Navigate::edges(&store, h).into_iter().map(TopologyHandle::Edge).collect(),
+            "wire" | "wires" => Navigate::wires(&store, h).into_iter().map(TopologyHandle::Wire).collect(),
+            "face" | "faces" => Navigate::faces(&store, h).into_iter().map(TopologyHandle::Face).collect(),
+            "shell" | "shells" => Navigate::shells(&store, h).into_iter().map(TopologyHandle::Shell).collect(),
+            "cell" | "cells" => Navigate::cells(&store, h).into_iter().map(TopologyHandle::Cell).collect(),
+            "cellcomplex" | "cellcomplexes" => Navigate::cell_complexes(&store, h).into_iter().map(TopologyHandle::CellComplex).collect(),
+            other => return Err(PyValueError::new_err(format!("Topology.SubTopologies - Error: unknown sub-topology type '{}'.", other))),
+        };
+        drop(store);
+        handles.into_iter().map(|hh| handle_to_object(py, hh)).collect()
+    }
+
+    /// The topologicpy type name of any topology ("Vertex", "Edge", ...).
+    #[staticmethod]
+    fn TypeAsString(topology: &Bound<'_, PyAny>) -> PyResult<String> {
+        Ok(handle_type_name(&any_to_handle(topology)?).to_string())
+    }
+
+    /// The topologicpy integer type code (Vertex=1, Edge=2, Wire=4, Face=8,
+    /// Shell=16, Cell=32, CellComplex=64, Cluster=128).
+    #[staticmethod]
+    fn Type(topology: &Bound<'_, PyAny>) -> PyResult<i64> {
+        Ok(handle_type_code(&any_to_handle(topology)?))
+    }
+
+    /// True if the topology is of the given type name (case-insensitive);
+    /// "Topology" always matches.
+    #[staticmethod]
+    fn IsInstance(topology: &Bound<'_, PyAny>, type_name: &str) -> PyResult<bool> {
+        let name = handle_type_name(&any_to_handle(topology)?).to_lowercase();
+        let t = type_name.to_lowercase();
+        Ok(t == "topology" || t == name)
+    }
+
+    /// Translate any topology by (x, y, z). Returns the same topology type.
+    #[staticmethod]
+    #[pyo3(signature = (topology, x=0.0, y=0.0, z=0.0))]
+    fn Translate(py: Python<'_>, topology: &Bound<'_, PyAny>, x: f64, y: f64, z: f64) -> PyResult<PyObject> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        use topologic_core::topology::TopologyTransform as TT;
+        let out = match h {
+            TopologyHandle::Vertex(v) => TopologyHandle::Vertex(TT::translate_vertex(&store, v, x, y, z)),
+            TopologyHandle::Edge(e) => TopologyHandle::Edge(TT::translate_edge(&store, e, x, y, z)),
+            TopologyHandle::Wire(w) => TopologyHandle::Wire(TT::translate_wire(&store, w, x, y, z)),
+            TopologyHandle::Face(f) => TopologyHandle::Face(TT::translate_face(&store, f, x, y, z)),
+            TopologyHandle::Shell(s) => TopologyHandle::Shell(TT::translate_shell(&store, s, x, y, z)),
+            TopologyHandle::Cell(c) => TopologyHandle::Cell(TT::translate_cell(&store, c, x, y, z)),
+            TopologyHandle::CellComplex(cc) => {
+                let new_cells: Vec<_> = CellComplex::cells(&store, cc)
+                    .into_iter()
+                    .map(|c| TT::translate_cell(&store, c, x, y, z))
+                    .collect();
+                TopologyHandle::CellComplex(CellComplex::by_cells(&store, new_cells))
+            }
+            other => return Err(PyValueError::new_err(format!("Topology.Translate - Error: unsupported type {}.", handle_type_name(&other)))),
+        };
+        drop(store);
+        handle_to_object(py, out)
+    }
+
+    /// Rotate any topology around an axis through an origin by an angle (degrees).
+    #[staticmethod]
+    #[pyo3(signature = (topology, origin=None, axis=None, angle=0.0))]
+    fn Rotate(py: Python<'_>, topology: &Bound<'_, PyAny>, origin: Option<&PyVertex>, axis: Option<Vec<f64>>, angle: f64) -> PyResult<PyObject> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        let origin_point = match origin {
+            Some(v) => Vertex::point(&store, v.handle),
+            None => Point3::ZERO,
+        };
+        let axis_vec = match axis {
+            Some(a) => Vector3::new(
+                a.get(0).copied().unwrap_or(0.0),
+                a.get(1).copied().unwrap_or(0.0),
+                a.get(2).copied().unwrap_or(1.0),
+            ),
+            None => Vector3::Z,
+        };
+        use topologic_core::topology::TopologyTransform as TT;
+        let out = match h {
+            TopologyHandle::Vertex(v) => TopologyHandle::Vertex(TT::rotate_vertex(&store, v, origin_point, axis_vec, angle)),
+            TopologyHandle::Edge(e) => TopologyHandle::Edge(TT::rotate_edge(&store, e, origin_point, axis_vec, angle)),
+            TopologyHandle::Wire(w) => TopologyHandle::Wire(TT::rotate_wire(&store, w, origin_point, axis_vec, angle)),
+            TopologyHandle::Face(f) => TopologyHandle::Face(TT::rotate_face(&store, f, origin_point, axis_vec, angle)),
+            TopologyHandle::Shell(s) => TopologyHandle::Shell(TT::rotate_shell(&store, s, origin_point, axis_vec, angle)),
+            TopologyHandle::Cell(c) => TopologyHandle::Cell(TT::rotate_cell(&store, c, origin_point, axis_vec, angle)),
+            TopologyHandle::CellComplex(cc) => {
+                let new_cells: Vec<_> = CellComplex::cells(&store, cc)
+                    .into_iter()
+                    .map(|c| TT::rotate_cell(&store, c, origin_point, axis_vec, angle))
+                    .collect();
+                TopologyHandle::CellComplex(CellComplex::by_cells(&store, new_cells))
+            }
+            other => return Err(PyValueError::new_err(format!("Topology.Rotate - Error: unsupported type {}.", handle_type_name(&other)))),
+        };
+        drop(store);
+        handle_to_object(py, out)
+    }
+
+    /// Scale any topology about an origin by per-axis factors.
+    #[staticmethod]
+    #[pyo3(signature = (topology, origin=None, x=1.0, y=1.0, z=1.0))]
+    fn Scale(py: Python<'_>, topology: &Bound<'_, PyAny>, origin: Option<&PyVertex>, x: f64, y: f64, z: f64) -> PyResult<PyObject> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        let origin_point = match origin {
+            Some(v) => Vertex::point(&store, v.handle),
+            None => Point3::ZERO,
+        };
+        use topologic_core::topology::TopologyTransform as TT;
+        let out = match h {
+            TopologyHandle::Vertex(v) => TopologyHandle::Vertex(TT::scale_vertex(&store, v, origin_point, x, y, z)),
+            TopologyHandle::Edge(e) => TopologyHandle::Edge(TT::scale_edge(&store, e, origin_point, x, y, z)),
+            TopologyHandle::Wire(w) => TopologyHandle::Wire(TT::scale_wire(&store, w, origin_point, x, y, z)),
+            TopologyHandle::Face(f) => TopologyHandle::Face(TT::scale_face(&store, f, origin_point, x, y, z)),
+            TopologyHandle::Shell(s) => TopologyHandle::Shell(TT::scale_shell(&store, s, origin_point, x, y, z)),
+            TopologyHandle::Cell(c) => TopologyHandle::Cell(TT::scale_cell(&store, c, origin_point, x, y, z)),
+            TopologyHandle::CellComplex(cc) => {
+                let new_cells: Vec<_> = CellComplex::cells(&store, cc)
+                    .into_iter()
+                    .map(|c| TT::scale_cell(&store, c, origin_point, x, y, z))
+                    .collect();
+                TopologyHandle::CellComplex(CellComplex::by_cells(&store, new_cells))
+            }
+            other => return Err(PyValueError::new_err(format!("Topology.Scale - Error: unsupported type {}.", handle_type_name(&other)))),
+        };
+        drop(store);
+        handle_to_object(py, out)
+    }
+
+    /// Attach a dictionary to any topology and return the topology.
+    #[staticmethod]
+    fn SetDictionary(topology: &Bound<'_, PyAny>, dictionary: &PyDictionary) -> PyResult<PyObject> {
+        if let Ok(v) = topology.extract::<PyVertex>() { v.SetDictionary(dictionary); }
+        else if let Ok(e) = topology.extract::<PyEdge>() { e.SetDictionary(dictionary); }
+        else if let Ok(w) = topology.extract::<PyWire>() { w.SetDictionary(dictionary); }
+        else if let Ok(f) = topology.extract::<PyFace>() { f.SetDictionary(dictionary); }
+        else if let Ok(s) = topology.extract::<PyShell>() { s.SetDictionary(dictionary); }
+        else if let Ok(c) = topology.extract::<PyCell>() { c.SetDictionary(dictionary); }
+        else if let Ok(cc) = topology.extract::<PyCellComplex>() { cc.SetDictionary(dictionary); }
+        else if let Ok(cl) = topology.extract::<PyCluster>() { cl.SetDictionary(dictionary); }
+        else { return Err(PyValueError::new_err("Topology.SetDictionary - Error: not a topology object.")); }
+        Ok(topology.clone().unbind())
+    }
+
+    /// Get the dictionary attached to any topology.
+    #[staticmethod]
+    fn Dictionary(topology: &Bound<'_, PyAny>) -> PyResult<PyDictionary> {
+        if let Ok(v) = topology.extract::<PyVertex>() { return Ok(v.GetDictionary()); }
+        if let Ok(e) = topology.extract::<PyEdge>() { return Ok(e.GetDictionary()); }
+        if let Ok(w) = topology.extract::<PyWire>() { return Ok(w.GetDictionary()); }
+        if let Ok(f) = topology.extract::<PyFace>() { return Ok(f.GetDictionary()); }
+        if let Ok(s) = topology.extract::<PyShell>() { return Ok(s.GetDictionary()); }
+        if let Ok(c) = topology.extract::<PyCell>() { return Ok(c.GetDictionary()); }
+        if let Ok(cc) = topology.extract::<PyCellComplex>() { return Ok(cc.GetDictionary()); }
+        if let Ok(cl) = topology.extract::<PyCluster>() { return Ok(cl.GetDictionary()); }
+        Err(PyValueError::new_err("Topology.Dictionary - Error: not a topology object."))
+    }
+
+    /// The center of mass of any topology, as a Vertex.
+    #[staticmethod]
+    fn CenterOfMass(topology: &Bound<'_, PyAny>) -> PyResult<PyVertex> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        let p = match h {
+            TopologyHandle::Vertex(x) => Vertex::center_of_mass(&store, x),
+            TopologyHandle::Edge(x) => Edge::center_of_mass(&store, x),
+            TopologyHandle::Wire(x) => Wire::center_of_mass(&store, x),
+            TopologyHandle::Face(x) => Face::center_of_mass(&store, x),
+            TopologyHandle::Shell(x) => Shell::center_of_mass(&store, x),
+            TopologyHandle::Cell(x) => Cell::center_of_mass(&store, x),
+            TopologyHandle::CellComplex(x) => CellComplex::center_of_mass(&store, x),
+            TopologyHandle::Cluster(x) => Cluster::center_of_mass(&store, x),
+        };
+        Ok(PyVertex { handle: store.add_vertex(p) })
+    }
+
+    /// The centroid (average of vertices) of any topology, as a Vertex.
+    #[staticmethod]
+    fn Centroid(topology: &Bound<'_, PyAny>) -> PyResult<PyVertex> {
+        let h = any_to_handle(topology)?;
+        let store = get_store().read();
+        let verts = topologic_core::topology::Navigate::vertices(&store, h);
+        let p = if verts.is_empty() {
+            Point3::ZERO
+        } else {
+            let mut acc = Point3::ZERO;
+            for v in &verts {
+                acc += Vertex::point(&store, *v);
+            }
+            acc / (verts.len() as f64)
+        };
+        Ok(PyVertex { handle: store.add_vertex(p) })
     }
 
     /// Translate a vertex
@@ -3327,6 +3655,24 @@ fn dict_value_to_python(value: &DictionaryValue, py: Python<'_>) -> PyObject {
 }
 
 /// Python wrapper for Vector utility class
+/// Dot product of two 3-component arrays.
+fn dot3(a: &[f64; 3], b: &[f64; 3]) -> f64 {
+    a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+}
+
+/// Normalize a vector to unit length; returns None if it is (near) zero.
+fn normalize3(v: &[f64]) -> Option<[f64; 3]> {
+    let x = v.get(0).copied().unwrap_or(0.0);
+    let y = v.get(1).copied().unwrap_or(0.0);
+    let z = v.get(2).copied().unwrap_or(0.0);
+    let m = (x * x + y * y + z * z).sqrt();
+    if m == 0.0 {
+        None
+    } else {
+        Some([x / m, y / m, z / m])
+    }
+}
+
 #[pyclass(name = "Vector")]
 pub struct PyVector;
 
@@ -3342,6 +3688,249 @@ impl PyVector {
                  vec_b.get(1).copied().unwrap_or(0.0),
                  vec_b.get(2).copied().unwrap_or(0.0)];
         VectorUtil::angle(a, b)
+    }
+
+    // ----- topologicpy-parity additions (pure vector math) ---------------
+
+    /// Component-wise sum of two vectors.
+    #[staticmethod]
+    #[allow(non_snake_case)]
+    fn Add(vectorA: Vec<f64>, vectorB: Vec<f64>) -> Vec<f64> {
+        let n = vectorA.len().max(vectorB.len());
+        (0..n).map(|i| vectorA.get(i).copied().unwrap_or(0.0) + vectorB.get(i).copied().unwrap_or(0.0)).collect()
+    }
+
+    /// Component-wise difference (vectorA - vectorB).
+    #[staticmethod]
+    #[allow(non_snake_case)]
+    fn Subtract(vectorA: Vec<f64>, vectorB: Vec<f64>) -> Vec<f64> {
+        let n = vectorA.len().max(vectorB.len());
+        (0..n).map(|i| vectorA.get(i).copied().unwrap_or(0.0) - vectorB.get(i).copied().unwrap_or(0.0)).collect()
+    }
+
+    /// Component-wise sum of a list of vectors.
+    #[staticmethod]
+    fn Sum(vectors: Vec<Vec<f64>>) -> Vec<f64> {
+        let n = vectors.iter().map(|v| v.len()).max().unwrap_or(0);
+        (0..n).map(|i| vectors.iter().map(|v| v.get(i).copied().unwrap_or(0.0)).sum()).collect()
+    }
+
+    /// Component-wise average of a list of vectors.
+    #[staticmethod]
+    fn Average(vectors: Vec<Vec<f64>>) -> Vec<f64> {
+        let count = vectors.len().max(1) as f64;
+        let n = vectors.iter().map(|v| v.len()).max().unwrap_or(0);
+        (0..n).map(|i| vectors.iter().map(|v| v.get(i).copied().unwrap_or(0.0)).sum::<f64>() / count).collect()
+    }
+
+    /// The magnitude (length) of a vector, rounded to `mantissa` decimals.
+    #[staticmethod]
+    #[pyo3(signature = (vector, mantissa=6))]
+    fn Length(vector: Vec<f64>, mantissa: u32) -> f64 {
+        let q: f64 = vector.iter().map(|c| c * c).sum();
+        let f = 10f64.powi(mantissa as i32);
+        (q.sqrt() * f).round() / f
+    }
+
+    /// The quadrance (squared length) of a vector, rounded to `mantissa` decimals.
+    #[staticmethod]
+    #[pyo3(signature = (vector, mantissa=6))]
+    fn Quadrance(vector: Vec<f64>, mantissa: u32) -> f64 {
+        let q: f64 = vector.iter().map(|c| c * c).sum();
+        let f = 10f64.powi(mantissa as i32);
+        (q * f).round() / f
+    }
+
+    /// The unit X axis [1, 0, 0].
+    #[staticmethod]
+    fn XAxis() -> Vec<f64> { vec![1.0, 0.0, 0.0] }
+
+    /// The unit Y axis [0, 1, 0].
+    #[staticmethod]
+    fn YAxis() -> Vec<f64> { vec![0.0, 1.0, 0.0] }
+
+    /// The unit Z axis [0, 0, 1].
+    #[staticmethod]
+    fn ZAxis() -> Vec<f64> { vec![0.0, 0.0, 1.0] }
+
+    /// The northeast direction [1, 1, 0].
+    #[staticmethod]
+    fn NorthEast() -> Vec<f64> { vec![1.0, 1.0, 0.0] }
+
+    /// The northwest direction [-1, 1, 0].
+    #[staticmethod]
+    fn NorthWest() -> Vec<f64> { vec![-1.0, 1.0, 0.0] }
+
+    /// The southeast direction [1, -1, 0].
+    #[staticmethod]
+    fn SouthEast() -> Vec<f64> { vec![1.0, -1.0, 0.0] }
+
+    /// The southwest direction [-1, -1, 0].
+    #[staticmethod]
+    fn SouthWest() -> Vec<f64> { vec![-1.0, -1.0, 0.0] }
+
+    /// True if the two vectors point in the same direction (within tolerance).
+    #[staticmethod]
+    #[pyo3(signature = (vectorA, vectorB, tolerance=0.0001))]
+    #[allow(non_snake_case)]
+    fn IsParallel(vectorA: Vec<f64>, vectorB: Vec<f64>, tolerance: f64) -> bool {
+        match (normalize3(&vectorA), normalize3(&vectorB)) {
+            (Some(a), Some(b)) => dot3(&a, &b) > 1.0 - tolerance,
+            _ => false,
+        }
+    }
+
+    /// True if the two vectors point in opposite directions (within tolerance).
+    #[staticmethod]
+    #[pyo3(signature = (vectorA, vectorB, tolerance=0.0001))]
+    #[allow(non_snake_case)]
+    fn IsAntiParallel(vectorA: Vec<f64>, vectorB: Vec<f64>, tolerance: f64) -> bool {
+        match (normalize3(&vectorA), normalize3(&vectorB)) {
+            (Some(a), Some(b)) => dot3(&a, &b) < -1.0 + tolerance,
+            _ => false,
+        }
+    }
+
+    /// True if the two vectors are component-wise equal within tolerance.
+    #[staticmethod]
+    #[pyo3(signature = (vectorA, vectorB, tolerance=0.0001))]
+    #[allow(non_snake_case)]
+    fn IsSame(vectorA: Vec<f64>, vectorB: Vec<f64>, tolerance: f64) -> bool {
+        let n = vectorA.len().max(vectorB.len());
+        (0..n).all(|i| {
+            (vectorA.get(i).copied().unwrap_or(0.0) - vectorB.get(i).copied().unwrap_or(0.0)).abs() <= tolerance
+        })
+    }
+
+    /// The normalized bisector of two vectors.
+    #[staticmethod]
+    #[allow(non_snake_case)]
+    fn Bisect(vectorA: Vec<f64>, vectorB: Vec<f64>) -> Vec<f64> {
+        match (normalize3(&vectorA), normalize3(&vectorB)) {
+            (Some(a), Some(b)) => {
+                let s = [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+                normalize3(&s).map(|v| vec![v[0], v[1], v[2]]).unwrap_or(vec![0.0, 0.0, 0.0])
+            }
+            _ => vec![0.0, 0.0, 0.0],
+        }
+    }
+
+    /// The spread (sin^2 of the angle) between two vectors, rounded to `mantissa`.
+    #[staticmethod]
+    #[pyo3(signature = (vectorA, vectorB, mantissa=6, bracket=false))]
+    #[allow(non_snake_case)]
+    fn Spread(vectorA: Vec<f64>, vectorB: Vec<f64>, mantissa: u32, bracket: bool) -> f64 {
+        let _ = bracket;
+        let qa: f64 = vectorA.iter().map(|c| c * c).sum();
+        let qb: f64 = vectorB.iter().map(|c| c * c).sum();
+        if qa == 0.0 || qb == 0.0 {
+            return 0.0;
+        }
+        let d = dot3(
+            &[vectorA.get(0).copied().unwrap_or(0.0), vectorA.get(1).copied().unwrap_or(0.0), vectorA.get(2).copied().unwrap_or(0.0)],
+            &[vectorB.get(0).copied().unwrap_or(0.0), vectorB.get(1).copied().unwrap_or(0.0), vectorB.get(2).copied().unwrap_or(0.0)],
+        );
+        let cos2 = (d * d) / (qa * qb);
+        let f = 10f64.powi(mantissa as i32);
+        ((1.0 - cos2) * f).round() / f
+    }
+
+    /// The list of all compass direction names.
+    #[staticmethod]
+    fn CompassDirections() -> Vec<String> {
+        ["Origin", "Up", "Down", "North", "Northeast", "East", "Southeast", "South",
+         "Southwest", "West", "Northwest", "Up_North", "Up_Northeast", "Up_East",
+         "Up_Southeast", "Up_South", "Up_Southwest", "Up_West", "Up_Northwest",
+         "Down_North", "Down_Northeast", "Down_East", "Down_Southeast", "Down_South",
+         "Down_Southwest", "Down_West", "Down_Northwest"]
+            .iter().map(|s| s.to_string()).collect()
+    }
+
+    /// The compass direction name of a vector (e.g. "Northeast", "Up_East").
+    #[staticmethod]
+    #[pyo3(signature = (vector, tolerance=0.0001))]
+    fn CompassDirection(vector: Vec<f64>, tolerance: f64) -> Option<String> {
+        if vector.len() != 3 {
+            return None;
+        }
+        let (mut x, mut y, mut z) = (vector[0], vector[1], vector[2]);
+        if x.abs() <= tolerance && y.abs() <= tolerance && z.abs() <= tolerance {
+            return Some("Origin".to_string());
+        }
+        let mag = (x * x + y * y + z * z).sqrt();
+        x /= mag;
+        y /= mag;
+        z /= mag;
+        if x.abs() <= tolerance { x = 0.0; }
+        if y.abs() <= tolerance { y = 0.0; }
+        if z.abs() <= tolerance { z = 0.0; }
+        let horizontal = if x == 0.0 && y > 0.0 { "North" }
+            else if x == 0.0 && y < 0.0 { "South" }
+            else if y == 0.0 && x > 0.0 { "East" }
+            else if y == 0.0 && x < 0.0 { "West" }
+            else if x > 0.0 && y > 0.0 { "Northeast" }
+            else if x < 0.0 && y > 0.0 { "Northwest" }
+            else if x < 0.0 && y < 0.0 { "Southwest" }
+            else if x > 0.0 && y < 0.0 { "Southeast" }
+            else { "" };
+        let result = if z > 0.0 {
+            if !horizontal.is_empty() { format!("Up_{}", horizontal) } else { "Up".to_string() }
+        } else if z < 0.0 {
+            if !horizontal.is_empty() { format!("Down_{}", horizontal) } else { "Down".to_string() }
+        } else {
+            horizontal.to_string()
+        };
+        Some(result)
+    }
+
+    /// The 4x4 transformation matrix that aligns vectorA with vectorB
+    /// (Rodrigues' rotation; matches the topologicpy/Blender convention).
+    #[staticmethod]
+    #[allow(non_snake_case)]
+    fn TransformationMatrix(vectorA: Vec<f64>, vectorB: Vec<f64>) -> Vec<Vec<f64>> {
+        let eye4 = || vec![
+            vec![1.0, 0.0, 0.0, 0.0],
+            vec![0.0, 1.0, 0.0, 0.0],
+            vec![0.0, 0.0, 1.0, 0.0],
+            vec![0.0, 0.0, 0.0, 1.0],
+        ];
+        let a = match normalize3(&vectorA) { Some(v) => v, None => return eye4() };
+        let b = match normalize3(&vectorB) { Some(v) => v, None => return eye4() };
+        let d = dot3(&a, &b);
+        if (d - 1.0).abs() < 1e-8 {
+            return eye4();
+        }
+        if (d + 1.0).abs() < 1e-8 {
+            let mut m = eye4();
+            m[2][2] = -1.0;
+            return m;
+        }
+        let c = [
+            a[1] * b[2] - a[2] * b[1],
+            a[2] * b[0] - a[0] * b[2],
+            a[0] * b[1] - a[1] * b[0],
+        ];
+        // Skew-symmetric matrix (with [3][3]=1, matching the reference source).
+        let s = [
+            [0.0, -c[2], c[1], 0.0],
+            [c[2], 0.0, -c[0], 0.0],
+            [-c[1], c[0], 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ];
+        let mut s2 = [[0.0f64; 4]; 4];
+        for i in 0..4 {
+            for j in 0..4 {
+                s2[i][j] = (0..4).map(|k| s[i][k] * s[k][j]).sum();
+            }
+        }
+        let factor = 1.0 / (1.0 + d);
+        let mut r = eye4();
+        for i in 0..4 {
+            for j in 0..4 {
+                r[i][j] += s[i][j] + s2[i][j] * factor;
+            }
+        }
+        r
     }
 
     /// Get azimuth and altitude of a vector

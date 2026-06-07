@@ -28,9 +28,152 @@ pub(crate) struct CellComplexData {
 pub struct CellComplex;
 
 impl CellComplex {
-    /// Create a cell complex from cells
+    /// Create a cell complex from cells.
+    ///
+    /// Coincident faces shared between two cells (e.g. a partition wall) are
+    /// merged into a single non-manifold face adjacent to both cells, matching
+    /// Topologic semantics, so that `Face::cells` reports both owners and the
+    /// shared face is counted once.
     pub fn by_cells(store: &TopologyStore, cells: Vec<CellHandle>) -> CellComplexHandle {
+        Self::merge_coincident_vertices(store, &cells);
+        Self::merge_coincident_faces(store, &cells);
         store.add_cell_complex(cells)
+    }
+
+    /// Unify geometrically-coincident vertices across the input cells by
+    /// redirecting edge endpoints to a single canonical vertex per location.
+    ///
+    /// Independently-constructed cells create distinct vertices at shared
+    /// locations (e.g. along a partition seam). Without this, a face shared
+    /// between two cells and the walls meeting it reference different vertex
+    /// handles at the same point, leaving the topology un-sewn — which breaks
+    /// reconstruction-based operations such as transforms (the rebuilt shell is
+    /// not closed). Sewing the vertices makes the complex consistent.
+    fn merge_coincident_vertices(store: &TopologyStore, cells: &[CellHandle]) {
+        use hashbrown::{HashMap, HashSet};
+        const SCALE: f64 = 1e6;
+        let quant = |p: Point3| {
+            (
+                (p.x * SCALE).round() as i64,
+                (p.y * SCALE).round() as i64,
+                (p.z * SCALE).round() as i64,
+            )
+        };
+
+        let mut canonical: HashMap<(i64, i64, i64), VertexHandle> = HashMap::new();
+        let mut redirect: HashMap<VertexHandle, VertexHandle> = HashMap::new();
+        for &cell in cells {
+            for v in Cell::vertices(store, cell) {
+                let key = quant(Vertex::point(store, v));
+                match canonical.get(&key).copied() {
+                    None => {
+                        canonical.insert(key, v);
+                    }
+                    Some(cv) if cv != v => {
+                        redirect.insert(v, cv);
+                    }
+                    Some(_) => {}
+                }
+            }
+        }
+        if redirect.is_empty() {
+            return;
+        }
+
+        // Collect the unique edges of all cells, then redirect their endpoints.
+        let mut seen = HashSet::new();
+        let mut edge_handles = Vec::new();
+        for &cell in cells {
+            for e in Cell::edges(store, cell) {
+                if seen.insert(e) {
+                    edge_handles.push(e);
+                }
+            }
+        }
+        let mut edges = store.edges.write();
+        for e in edge_handles {
+            if let Some(ed) = edges.get_mut(e.index.index()) {
+                if let Some(&nv) = redirect.get(&ed.start) {
+                    ed.start = nv;
+                }
+                if let Some(&nv) = redirect.get(&ed.end) {
+                    ed.end = nv;
+                }
+            }
+        }
+    }
+
+    /// Merge geometrically-coincident faces across the input cells so a shared
+    /// partition is represented by a single face referenced by both cells,
+    /// rather than duplicate coincident faces each owned by one cell.
+    ///
+    /// Two faces are considered coincident when their boundary vertex sets are
+    /// equal (order- and winding-independent) after quantizing coordinates. The
+    /// duplicate's owning shell is redirected to the canonical face, and the
+    /// canonical face records the second cell as an additional owner.
+    fn merge_coincident_faces(store: &TopologyStore, cells: &[CellHandle]) {
+        use hashbrown::HashMap;
+        const SCALE: f64 = 1e6;
+        let quant = |p: Point3| {
+            (
+                (p.x * SCALE).round() as i64,
+                (p.y * SCALE).round() as i64,
+                (p.z * SCALE).round() as i64,
+            )
+        };
+        let face_key = |face: FaceHandle| {
+            let mut k: Vec<(i64, i64, i64)> = Face::vertices(store, face)
+                .iter()
+                .map(|v| quant(Vertex::point(store, *v)))
+                .collect();
+            k.sort_unstable();
+            k
+        };
+
+        let mut canon: HashMap<Vec<(i64, i64, i64)>, FaceHandle> = HashMap::new();
+        for &cell in cells {
+            for shell in Cell::shells(store, cell) {
+                for face in Shell::faces(store, shell) {
+                    let key = face_key(face);
+                    if key.len() < 3 {
+                        continue;
+                    }
+                    match canon.get(&key).copied() {
+                        None => {
+                            canon.insert(key, face);
+                        }
+                        Some(canonical) if canonical != face => {
+                            // Redirect this shell's reference from the duplicate
+                            // face to the canonical (shared) face.
+                            {
+                                let mut shells = store.shells.write();
+                                if let Some(s) = shells.get_mut(shell.index.index()) {
+                                    for f in s.faces.iter_mut() {
+                                        if *f == face {
+                                            *f = canonical;
+                                        }
+                                    }
+                                }
+                            }
+                            // Record this cell (and shell) as an owner of the
+                            // canonical face so adjacency queries see both cells.
+                            {
+                                let mut faces = store.faces.write();
+                                if let Some(cf) = faces.get_mut(canonical.index.index()) {
+                                    if !cf.cells.contains(&cell) {
+                                        cf.cells.push(cell);
+                                    }
+                                    if !cf.shells.contains(&shell) {
+                                        cf.shells.push(shell);
+                                    }
+                                }
+                            }
+                        }
+                        Some(_) => {}
+                    }
+                }
+            }
+        }
     }
 
     /// Create a cell complex from faces (finds connected volumes)
@@ -381,5 +524,33 @@ mod tests {
         let complex = CellComplex::box_complex(&store, Point3::ZERO, 2.0, 2.0, 2.0);
 
         assert!((CellComplex::volume(&store, complex) - 8.0).abs() < 0.5);
+    }
+
+    #[test]
+    fn test_shared_face_merged() {
+        // Two unit cubes stacked along Z share the face at z = 1.
+        let store = TopologyStore::new();
+        let c1 = Cell::box_cell(&store, Point3::ZERO, 1.0, 1.0, 1.0);
+        let c2 = Cell::box_cell(&store, Point3::new(0.0, 0.0, 1.0), 1.0, 1.0, 1.0);
+        let complex = CellComplex::by_cells(&store, vec![c1, c2]);
+
+        // 6 + 6 - 1 shared = 11 distinct faces.
+        let faces = CellComplex::faces(&store, complex);
+        assert_eq!(faces.len(), 11, "shared face should be merged");
+
+        // Exactly one face is shared by both cells; the rest are boundary.
+        let counts: Vec<usize> = faces
+            .iter()
+            .map(|f| Face::cells(&store, *f).len())
+            .collect();
+        assert_eq!(counts.iter().filter(|&&n| n == 2).count(), 1);
+        assert_eq!(counts.iter().filter(|&&n| n == 1).count(), 10);
+
+        // Internal/boundary classification reflects the sharing.
+        assert_eq!(CellComplex::internal_boundaries(&store, complex).len(), 1);
+        assert_eq!(CellComplex::boundary_faces(&store, complex).len(), 10);
+
+        // Volume is preserved.
+        assert!((CellComplex::volume(&store, complex) - 2.0).abs() < 1e-9);
     }
 }

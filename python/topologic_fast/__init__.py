@@ -16,6 +16,20 @@ Example:
 # This file is only for type hints and documentation
 from .topologic_fast import *
 
+# Pure-Python modules built on top of the Rust extension.
+from .Sun import Sun
+from .Energy import Energy
+from .backend import TopologicFastBackend
+
+# Attach pure-Python parity helpers (topologicpy-compatible static methods) onto
+# the Rust topology classes.
+from . import _pyhelpers as _pyhelpers
+from . import _native_api as _native_api
+import sys as _sys
+_pyhelpers.install(_sys.modules[__name__])
+# Lean, fast, topologicpy-compatible static methods (the performance path).
+_native_api.install(_sys.modules[__name__])
+
 __version__ = "0.1.0"
 __all__ = [
     "Vertex",
@@ -27,6 +41,9 @@ __all__ = [
     "CellComplex",
     "Topology",
     "Mesh",
+    "Sun",
+    "Energy",
+    "TopologicFastBackend",
     "clear_store",
     "store_stats",
 ]
