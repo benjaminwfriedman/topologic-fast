@@ -57,28 +57,50 @@ impl PyVertex {
         })
     }
 
-    /// Get the X coordinate
-    fn X(&self) -> f64 {
+    /// Get the X coordinate (topologicpy-compatible: optional mantissa rounding).
+    #[pyo3(signature = (mantissa=None, silent=false))]
+    fn X(&self, mantissa: Option<i32>, silent: bool) -> f64 {
+        let _ = silent;
         let store = get_store().read();
-        Vertex::x(&store, self.handle)
+        round_opt(Vertex::x(&store, self.handle), mantissa)
     }
 
-    /// Get the Y coordinate
-    fn Y(&self) -> f64 {
+    /// Get the Y coordinate.
+    #[pyo3(signature = (mantissa=None, silent=false))]
+    fn Y(&self, mantissa: Option<i32>, silent: bool) -> f64 {
+        let _ = silent;
         let store = get_store().read();
-        Vertex::y(&store, self.handle)
+        round_opt(Vertex::y(&store, self.handle), mantissa)
     }
 
-    /// Get the Z coordinate
-    fn Z(&self) -> f64 {
+    /// Get the Z coordinate.
+    #[pyo3(signature = (mantissa=None, silent=false))]
+    fn Z(&self, mantissa: Option<i32>, silent: bool) -> f64 {
+        let _ = silent;
         let store = get_store().read();
-        Vertex::z(&store, self.handle)
+        round_opt(Vertex::z(&store, self.handle), mantissa)
     }
 
-    /// Get all coordinates
-    fn Coordinates(&self) -> (f64, f64, f64) {
+    /// Get the coordinates as a list, ordered/subset by `output_type`
+    /// (a permutation/subset of "xyz"), optionally rounded to `mantissa`.
+    #[pyo3(signature = (output_type="xyz", mantissa=None))]
+    fn Coordinates(&self, output_type: &str, mantissa: Option<i32>) -> Vec<f64> {
         let store = get_store().read();
-        Vertex::coordinates(&store, self.handle)
+        let (x, y, z) = Vertex::coordinates(&store, self.handle);
+        // Fast path for the overwhelmingly common default.
+        if mantissa.is_none() && output_type == "xyz" {
+            return vec![x, y, z];
+        }
+        let (x, y, z) = (round_opt(x, mantissa), round_opt(y, mantissa), round_opt(z, mantissa));
+        output_type
+            .chars()
+            .filter_map(|c| match c.to_ascii_lowercase() {
+                'x' => Some(x),
+                'y' => Some(y),
+                'z' => Some(z),
+                _ => None,
+            })
+            .collect()
     }
 
     /// Get adjacent vertices
@@ -90,10 +112,11 @@ impl PyVertex {
             .collect()
     }
 
-    /// Calculate distance to another vertex
-    fn Distance(&self, other: &PyVertex) -> f64 {
+    /// Calculate distance to another vertex (optional mantissa rounding).
+    #[pyo3(signature = (other, mantissa=None))]
+    fn Distance(&self, other: &PyVertex, mantissa: Option<i32>) -> f64 {
         let store = get_store().read();
-        Vertex::distance(&store, self.handle, other.handle)
+        round_opt(Vertex::distance(&store, self.handle, other.handle), mantissa)
     }
 
     /// Get the dictionary attached to this vertex
@@ -126,7 +149,8 @@ impl PyVertex {
     }
 
     fn __repr__(&self) -> String {
-        let (x, y, z) = self.Coordinates();
+        let store = get_store().read();
+        let (x, y, z) = Vertex::coordinates(&store, self.handle);
         format!("Vertex({:.4}, {:.4}, {:.4})", x, y, z)
     }
 }
@@ -3655,6 +3679,20 @@ fn dict_value_to_python(value: &DictionaryValue, py: Python<'_>) -> PyObject {
 }
 
 /// Python wrapper for Vector utility class
+/// Round to `mantissa` decimal places (topologicpy convention).
+fn round_to(v: f64, mantissa: i32) -> f64 {
+    let f = 10f64.powi(mantissa);
+    (v * f).round() / f
+}
+
+/// Round to `mantissa` decimals if Some, else return as-is.
+fn round_opt(v: f64, mantissa: Option<i32>) -> f64 {
+    match mantissa {
+        Some(m) => round_to(v, m),
+        None => v,
+    }
+}
+
 /// Dot product of two 3-component arrays.
 fn dot3(a: &[f64; 3], b: &[f64; 3]) -> f64 {
     a[0] * b[0] + a[1] * b[1] + a[2] * b[2]

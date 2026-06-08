@@ -35,36 +35,6 @@ def _round(value, mantissa):
     return round(value, mantissa) if mantissa is not None else value
 
 
-def _install_vertex(Vertex):
-    _X, _Y, _Z = Vertex.X, Vertex.Y, Vertex.Z
-    _coords = Vertex.Coordinates
-
-    def X(vertex, mantissa=None, silent=False):
-        return _round(_X(vertex), mantissa)
-
-    def Y(vertex, mantissa=None, silent=False):
-        return _round(_Y(vertex), mantissa)
-
-    def Z(vertex, mantissa=None, silent=False):
-        return _round(_Z(vertex), mantissa)
-
-    def Coordinates(vertex, outputType="xyz", mantissa=None):
-        x, y, z = _coords(vertex)
-        if mantissa is not None:
-            x, y, z = round(x, mantissa), round(y, mantissa), round(z, mantissa)
-        comp = {"x": x, "y": y, "z": z}
-        ot = (outputType or "xyz").lower()
-        return [comp[c] for c in ot if c in comp]
-
-    def Distance(vertexA, vertexB, mantissa=None):
-        ax, ay, az = _coords(vertexA)
-        bx, by, bz = _coords(vertexB)
-        d = math.sqrt((ax - bx) ** 2 + (ay - by) ** 2 + (az - bz) ** 2)
-        return _round(d, mantissa)
-
-    _attach(Vertex, {"X": X, "Y": Y, "Z": Z, "Coordinates": Coordinates, "Distance": Distance})
-
-
 def _install_edge(Edge):
     _len = Edge.Length
     _sv, _ev = Edge.StartVertex, Edge.EndVertex
@@ -470,8 +440,11 @@ def _attach(cls, methods):
 
 
 def install(namespace):
-    """Attach the lean fast topologicpy-compatible methods to the tf classes."""
-    _install_vertex(namespace.Vertex)
+    """Attach the lean fast topologicpy-compatible methods to the tf classes.
+
+    Vertex X/Y/Z/Coordinates/Distance are implemented natively in Rust (with
+    topologicpy params) for maximum speed — no Python wrapper here.
+    """
     _install_edge(namespace.Edge)
     _install_face(namespace.Face)
     _install_cell(namespace.Cell)
