@@ -261,3 +261,21 @@ def test_thickened_face_and_present_methods():
     d, td = tf.Dictionary.ByKeysValues(["a", "b"], [1, 2]), TD4.ByKeysValues(["a", "b"], [1, 2])
     assert sorted(tf.Dictionary.Keys(d)) == sorted(TD4.Keys(td))
     assert tf.Dictionary.ValueAtKey(d, "a") == TD4.ValueAtKey(td, "a") == 1
+
+
+def test_compactness_and_closeness_fixed():
+    from topologicpy.Face import Face as TF5
+    from topologicpy.Graph import Graph as TG5
+    from topologicpy.Edge import Edge as TE5
+    from topologicpy.Vertex import Vertex as TV5
+    ff, tfa = tf.Face.Rectangle(width=2, length=3), TF5.Rectangle(width=2, length=3)
+    assert tf.Face.Compactness(ff) == round(TF5.Compactness(tfa), 6)
+    coords = [(0, 0, 0), (1, 0, 0), (2, 0, 0), (1, 1, 0)]
+    edges = [(0, 1), (1, 2), (1, 3)]
+    fvs = [tf.Vertex.ByCoordinates(*c) for c in coords]
+    fes = [tf.Edge.ByStartVertexEndVertex(fvs[a], fvs[b]) for a, b in edges]
+    tvs = [TV5.ByCoordinates(*c) for c in coords]
+    tes = [TE5.ByStartVertexEndVertex(tvs[a], tvs[b]) for a, b in edges]
+    fg, tg = tf.Graph.ByVerticesEdges(fvs, fes), TG5.ByVerticesEdges(tvs, tes)
+    assert sorted(round(x, 4) for x in tf.Graph.ClosenessCentrality(fg)) == \
+        sorted(round(x, 4) for x in TG5.ClosenessCentrality(tg))

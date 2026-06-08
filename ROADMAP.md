@@ -6,14 +6,14 @@ Legend: `[x]` done (present + tested) · `[~]` present, untested · `[ ]` todo (
 
 ## Status
 
-**158 done · 201 present-untested · 532 todo · 891 total (40% present)**
+**160 done · 199 present-untested · 532 todo · 891 total (40% present)**
 
 | Phase | done | present | total |
 |---|---|---|---|
 | Phase A — Pure-math & data helpers | 36 | 38 | 87 |
-| Phase B — Core topology primitives | 58 | 113 | 357 |
+| Phase B — Core topology primitives | 59 | 112 | 357 |
 | Phase C — Topology dispatcher | 22 | 5 | 156 |
-| Phase D — Graph analytics | 4 | 45 | 177 |
+| Phase D — Graph analytics | 5 | 44 | 177 |
 | Phase E — Kernel features: apertures & contexts | 0 | 0 | 4 |
 | Phase F — Helper applications | 38 | 0 | 110 |
 
@@ -282,9 +282,10 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 - [ ] `Wire.Straighten`
 - [ ] `Wire.VertexDistance`
 
-### Face — 3 done / 37 present / 27 todo (of 67)
+### Face — 4 done / 36 present / 27 todo (of 67)
 
 - [x] `Face.Circle`
+- [x] `Face.Compactness`
 - [x] `Face.ExternalBoundary`
 - [x] `Face.Rectangle`
 - [~] `Face.AddInternalBoundaries`
@@ -295,7 +296,6 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 - [~] `Face.ByWire`
 - [~] `Face.ByWires`
 - [~] `Face.CShape`
-- [~] `Face.Compactness`
 - [~] `Face.CompassAngle`
 - [~] `Face.CrossShape`
 - [~] `Face.Edges`
@@ -672,10 +672,11 @@ _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON),
 
 _A full graph-analytics library (centralities, communities, flows, isomorphism). Real algorithm work; tf.Graph already has a base._
 
-### Graph — 4 done / 45 present / 128 todo (of 177)
+### Graph — 5 done / 44 present / 128 todo (of 177)
 
 - [x] `Graph.ByTopology`
 - [x] `Graph.ByVerticesEdges`
+- [x] `Graph.ClosenessCentrality`
 - [x] `Graph.MetricDistance`
 - [x] `Graph.TopologicalDistance`
 - [~] `Graph.AddEdge`
@@ -686,7 +687,6 @@ _A full graph-analytics library (centralities, communities, flows, isomorphism).
 - [~] `Graph.BetweennessCentrality`
 - [~] `Graph.Bridges`
 - [~] `Graph.ByAdjacencyMatrix`
-- [~] `Graph.ClosenessCentrality`
 - [~] `Graph.CommunityPartition`
 - [~] `Graph.ConnectedComponents`
 - [~] `Graph.ContainsEdge`

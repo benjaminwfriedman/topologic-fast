@@ -238,6 +238,14 @@ def _install_geometry_extras(ns):
     def Face_Centroid(face, mantissa=6):
         return Topology.Centroid(face)
 
+    def Face_Compactness(face, mantissa=6):
+        # topologicpy: sqrt of the 2D isoperimetric quotient (circle reference=1).
+        area = face.Area(None)
+        perimeter = face.ExternalBoundary().Length(None)
+        if perimeter == 0:
+            return 0.0
+        return round(2.0 * math.sqrt(math.pi * area) / perimeter, mantissa)
+
     def Topology_BoundingBox(topology, optimize=0, axes="xyz", mantissa=6, tolerance=0.0001, silent=False):
         verts = Topology.Vertices(topology)
         if not verts:
@@ -301,6 +309,7 @@ def _install_geometry_extras(ns):
     Cell.SurfaceArea = staticmethod(Cell_SurfaceArea)
     Cell.ByThickenedFace = staticmethod(Cell_ByThickenedFace)
     Face.Centroid = staticmethod(Face_Centroid)
+    Face.Compactness = staticmethod(Face_Compactness)
     Topology.BoundingBox = staticmethod(Topology_BoundingBox)
     Cell.Decompose = staticmethod(Cell_Decompose)
     ns.CellComplex.Decompose = staticmethod(CellComplex_Decompose)
@@ -348,6 +357,21 @@ def _install_merge_and_graph(ns):
     def Graph_TopologicalDistance(graph, vertexA, vertexB, tolerance=0.0001):
         return graph.Distance(vertexA, vertexB, tolerance)
 
+    def Graph_ClosenessCentrality(graph, vertices=None, tolerance=0.0001, mantissa=6):
+        # topologicpy convention: closeness(v) = (n-1) / sum(dist(v, others)).
+        verts = list(graph.Vertices()) if vertices is None else list(vertices)
+        n = len(verts)
+        out = []
+        for i, v in enumerate(verts):
+            total = 0
+            for j in range(n):
+                if j == i:
+                    continue
+                d = graph.Distance(v, verts[j], tolerance)
+                total += d if d is not None else 0
+            out.append(round((n - 1) / total, mantissa) if total > 0 else 0.0)
+        return out
+
     def Graph_MetricDistance(graph, vertexA, vertexB, mantissa=6, tolerance=0.0001):
         path = graph.Path(vertexA, vertexB, tolerance)
         if path is None:
@@ -358,6 +382,7 @@ def _install_merge_and_graph(ns):
     Topology.Merge = staticmethod(Topology_Merge)
     Graph.TopologicalDistance = staticmethod(Graph_TopologicalDistance)
     Graph.MetricDistance = staticmethod(Graph_MetricDistance)
+    Graph.ClosenessCentrality = staticmethod(Graph_ClosenessCentrality)
 
 
 def _install_booleans(ns):
