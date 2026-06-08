@@ -298,15 +298,12 @@ def _install_constructors(ns):
             return None
         return _e_bsv(vs[0], vs[1])
 
-    def Edge_ByStartVertexEndVertex(vertexA, vertexB, tolerance=0.0001, silent=False):
-        return _e_bsv(vertexA, vertexB)
-
     def Wire_ByVertices(vertices, close=True, tolerance=0.0001, silent=False):
         return _w_bv(vertices, close)
 
     Cell.Prism = staticmethod(Cell_Prism)
     Edge.ByVertices = staticmethod(Edge_ByVertices)
-    Edge.ByStartVertexEndVertex = staticmethod(Edge_ByStartVertexEndVertex)
+    # Edge.ByStartVertexEndVertex now accepts tolerance/silent natively in Rust.
     Wire.ByVertices = staticmethod(Wire_ByVertices)
 
     if _f_bw is not None:

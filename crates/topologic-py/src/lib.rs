@@ -166,7 +166,9 @@ pub struct PyEdge {
 impl PyEdge {
     /// Create an edge from start and end vertices
     #[staticmethod]
-    fn ByStartVertexEndVertex(start: &PyVertex, end: &PyVertex) -> PyResult<Self> {
+    #[pyo3(signature = (start, end, tolerance=0.0001, silent=false))]
+    fn ByStartVertexEndVertex(start: &PyVertex, end: &PyVertex, tolerance: f64, silent: bool) -> PyResult<Self> {
+        let _ = (tolerance, silent);
         let store = get_store().read();
         Ok(Self {
             handle: Edge::by_start_vertex_end_vertex(&store, start.handle, end.handle),
