@@ -250,10 +250,51 @@ def _install_geometry_extras(ns):
             res[cat_map[_classify_tilt(f, tiltAngle)]].append(f)
         return res
 
+    _CC_KEYS = ["cells", "externalVerticalFaces", "internalVerticalFaces",
+                "topHorizontalFaces", "bottomHorizontalFaces", "internalHorizontalFaces",
+                "externalInclinedFaces", "internalInclinedFaces",
+                "externalVerticalApertures", "internalVerticalApertures",
+                "topHorizontalApertures", "bottomHorizontalApertures",
+                "internalHorizontalApertures", "externalInclinedApertures",
+                "internalInclinedApertures", "freeVerticalFaces", "freeHorizontalFaces",
+                "freeInclinedFaces", "freeVerticalApertures", "freeHorizontalApertures",
+                "freeInclinedApertures", "verticalFaces", "horizontalFaces", "inclinedFaces"]
+
+    def CellComplex_Decompose(cell_complex, tiltAngle=10, tolerance=0.0001):
+        res = {k: [] for k in _CC_KEYS}
+        res["cells"] = list(cell_complex.Cells())
+        for f in Topology.Faces(cell_complex):
+            internal = len(f.Cells()) >= 2
+            cat = _classify_tilt(f, tiltAngle)
+            if cat in ("top", "bottom"):
+                res["horizontalFaces"].append(f)
+                if internal:
+                    res["internalHorizontalFaces"].append(f)
+                elif cat == "top":
+                    res["topHorizontalFaces"].append(f)
+                else:
+                    res["bottomHorizontalFaces"].append(f)
+            elif cat == "vertical":
+                res["verticalFaces"].append(f)
+                res["internalVerticalFaces" if internal else "externalVerticalFaces"].append(f)
+            else:
+                res["inclinedFaces"].append(f)
+                res["internalInclinedFaces" if internal else "externalInclinedFaces"].append(f)
+        return res
+
+    def Topology_Decompose(topology, tiltAngle=10.0, tolerance=0.0001, silent=False):
+        if isinstance(topology, ns.CellComplex):
+            return CellComplex_Decompose(topology, tiltAngle, tolerance)
+        if isinstance(topology, ns.Cell):
+            return Cell_Decompose(topology, tiltAngle, tolerance)
+        return None
+
     Cell.SurfaceArea = staticmethod(Cell_SurfaceArea)
     Face.Centroid = staticmethod(Face_Centroid)
     Topology.BoundingBox = staticmethod(Topology_BoundingBox)
     Cell.Decompose = staticmethod(Cell_Decompose)
+    ns.CellComplex.Decompose = staticmethod(CellComplex_Decompose)
+    Topology.Decompose = staticmethod(Topology_Decompose)
 
 
 def _install_merge_and_graph(ns):

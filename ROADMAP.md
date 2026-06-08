@@ -6,13 +6,13 @@ Legend: `[x]` done (present + tested) · `[~]` present, untested · `[ ]` todo (
 
 ## Status
 
-**153 done · 203 present-untested · 535 todo · 891 total (40% present)**
+**155 done · 203 present-untested · 533 todo · 891 total (40% present)**
 
 | Phase | done | present | total |
 |---|---|---|---|
 | Phase A — Pure-math & data helpers | 34 | 40 | 87 |
-| Phase B — Core topology primitives | 56 | 113 | 357 |
-| Phase C — Topology dispatcher | 21 | 5 | 156 |
+| Phase B — Core topology primitives | 57 | 113 | 357 |
+| Phase C — Topology dispatcher | 22 | 5 | 156 |
 | Phase D — Graph analytics | 4 | 45 | 177 |
 | Phase E — Kernel features: apertures & contexts | 0 | 0 | 4 |
 | Phase F — Helper applications | 38 | 0 | 110 |
@@ -444,10 +444,11 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 - [ ] `Cell.Tube`
 - [ ] `Cell.Wedge`
 
-### CellComplex — 2 done / 7 present / 20 todo (of 29)
+### CellComplex — 3 done / 7 present / 19 todo (of 29)
 
 - [x] `CellComplex.Box`
 - [x] `CellComplex.ByCells`
+- [x] `CellComplex.Decompose`
 - [~] `CellComplex.Cells`
 - [~] `CellComplex.Edges`
 - [~] `CellComplex.Faces`
@@ -463,7 +464,6 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 - [ ] `CellComplex.ByWires`
 - [ ] `CellComplex.ByWiresCluster`
 - [ ] `CellComplex.Cube`
-- [ ] `CellComplex.Decompose`
 - [ ] `CellComplex.Delaunay`
 - [ ] `CellComplex.ExternalBoundary`
 - [ ] `CellComplex.ExternalFaces`
@@ -509,11 +509,12 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 
 _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON), analysis, booleans (Slice/Impose/Imprint), selectors._
 
-### Topology — 21 done / 5 present / 130 todo (of 156)
+### Topology — 22 done / 5 present / 129 todo (of 156)
 
 - [x] `Topology.BoundingBox`
 - [x] `Topology.CenterOfMass`
 - [x] `Topology.Centroid`
+- [x] `Topology.Decompose`
 - [x] `Topology.Dictionary`
 - [x] `Topology.Difference`
 - [x] `Topology.Edges`
@@ -581,7 +582,6 @@ _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON),
 - [ ] `Topology.ConvexHull`
 - [ ] `Topology.Copy`
 - [ ] `Topology.CoveredBy`
-- [ ] `Topology.Decompose`
 - [ ] `Topology.Degree`
 - [ ] `Topology.Diameter`
 - [ ] `Topology.Dimensionality`

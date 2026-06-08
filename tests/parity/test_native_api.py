@@ -231,3 +231,18 @@ def test_merge_and_graph_distances():
     g = tf.Graph.ByVerticesEdges(vs, es)
     assert tf.Graph.TopologicalDistance(g, vs[0], vs[2]) == 2
     assert tf.Graph.MetricDistance(g, vs[0], vs[2]) == 2.0
+
+
+def test_decompose_matches():
+    from topologicpy.CellComplex import CellComplex as TCC
+    from topologicpy.Cell import Cell as TC3
+    fcc = tf.CellComplex.ByCells([tf.Cell.Box(0, 0, 0, 2, 2, 2), tf.Cell.Box(0, 0, 2, 2, 2, 2)])
+    tcc = TCC.ByCells([TT.Translate(TC3.Prism(width=2, length=2, height=2), 1, 1, 1),
+                       TT.Translate(TC3.Prism(width=2, length=2, height=2), 1, 1, 3)])
+    fd, td = tf.CellComplex.Decompose(fcc), TCC.Decompose(tcc)
+    assert set(fd.keys()) == set(td.keys())
+    for k in td:
+        fl = len(fd[k]) if isinstance(fd[k], list) else fd[k]
+        tl = len(td[k]) if isinstance(td[k], list) else td[k]
+        assert fl == tl, k
+    assert len(tf.Topology.Decompose(fcc)["cells"]) == 2
