@@ -35,20 +35,16 @@ def _round(value, mantissa):
     return round(value, mantissa) if mantissa is not None else value
 
 
+def _coincident(a, b, tolerance):
+    ax, ay, az = a.Coordinates()
+    bx, by, bz = b.Coordinates()
+    return abs(ax - bx) <= tolerance and abs(ay - by) <= tolerance and abs(az - bz) <= tolerance
+
+
 def _install_edge(Edge):
-    _len = Edge.Length
-    _sv, _ev = Edge.StartVertex, Edge.EndVertex
+    # Length/StartVertex/EndVertex are pure-Rust (native, both call styles).
     _dir = Edge.Direction
     _vbp = Edge.VertexByParameter
-
-    def Length(edge, mantissa=6):
-        return _round(_len(edge), mantissa)
-
-    def StartVertex(edge):
-        return _sv(edge)
-
-    def EndVertex(edge):
-        return _ev(edge)
 
     def Direction(edge, mantissa=6):
         return [round(c, mantissa) for c in _dir(edge)]
@@ -56,61 +52,29 @@ def _install_edge(Edge):
     def VertexByParameter(edge, u=0.0):
         return _vbp(edge, u)
 
-    _attach(Edge, {"Length": Length, "StartVertex": StartVertex,
-                   "EndVertex": EndVertex, "Direction": Direction,
-                   "VertexByParameter": VertexByParameter})
-
-
-def _coincident(a, b, tolerance):
-    ax, ay, az = a.Coordinates()
-    bx, by, bz = b.Coordinates()
-    return abs(ax - bx) <= tolerance and abs(ay - by) <= tolerance and abs(az - bz) <= tolerance
-
-
-def _install_wire(Wire):
-    _len = Wire.Length
-    _closed = Wire.IsClosed
-
-    def Length(wire, mantissa=6):
-        return _round(_len(wire), mantissa)
-
-    def IsClosed(wire):
-        return _closed(wire)
-
-    _attach(Wire, {"Length": Length, "IsClosed": IsClosed})
+    _attach(Edge, {"Direction": Direction, "VertexByParameter": VertexByParameter})
 
 
 def _install_face(Face):
-    _area = Face.Area
+    # Area is pure-Rust now; Normal stays here (rounds + returns a list).
     _normal = Face.Normal
-
-    def Area(face, mantissa=6):
-        return _round(_area(face), mantissa)
 
     def Normal(face, mantissa=6):
         return [round(c, mantissa) for c in _normal(face)]
 
-    _attach(Face, {"Area": Area, "Normal": Normal})
+    _attach(Face, {"Normal": Normal})
 
 
 def _install_cell(Cell):
-    _vol = Cell.Volume
-    _area = Cell.Area
-
-    def Volume(cell, mantissa=6):
-        return _round(_vol(cell), mantissa)
-
-    def Area(cell, mantissa=6):
-        return _round(_area(cell), mantissa)
-
+    # Volume/Area are pure-Rust now; only the Compactness formula stays here.
     def Compactness(cell, reference="sphere", mantissa=6):
         # topologicpy's sphere-reference isoperimetric quotient: (36*pi*V^2)^(1/3)/A.
-        v, a = _vol(cell), _area(cell)
+        v, a = cell.Volume(None), cell.Area(None)
         if a == 0:
             return 0.0
         return round((36.0 * math.pi * v * v) ** (1.0 / 3.0) / a, mantissa)
 
-    _attach(Cell, {"Volume": Volume, "Area": Area, "Compactness": Compactness})
+    _attach(Cell, {"Compactness": Compactness})
 
 
 def _install_vertex_extras(ns):
@@ -448,7 +412,7 @@ def install(namespace):
     _install_edge(namespace.Edge)
     _install_face(namespace.Face)
     _install_cell(namespace.Cell)
-    _install_wire(namespace.Wire)
+    # Wire.Length is pure-Rust; Wire.IsClosed is raw Rust (both call styles).
     _install_constructors(namespace)
     _install_shapes(namespace)
     _install_edge_extras(namespace)

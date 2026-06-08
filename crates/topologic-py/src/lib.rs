@@ -221,9 +221,10 @@ impl PyEdge {
     }
 
     /// Get the length
-    fn Length(&self) -> f64 {
+    #[pyo3(signature = (mantissa=Some(6)))]
+    fn Length(&self, mantissa: Option<i32>) -> f64 {
         let store = get_store().read();
-        Edge::length(&store, self.handle)
+        round_opt(Edge::length(&store, self.handle), mantissa)
     }
 
     /// Get the direction (normalized)
@@ -545,7 +546,7 @@ impl PyEdge {
     }
 
     fn __repr__(&self) -> String {
-        format!("Edge(length={:.4})", self.Length())
+        format!("Edge(length={:.4})", self.Length(None))
     }
 }
 
@@ -958,9 +959,10 @@ impl PyWire {
     }
 
     /// Get the length
-    fn Length(&self) -> f64 {
+    #[pyo3(signature = (mantissa=Some(6)))]
+    fn Length(&self, mantissa: Option<i32>) -> f64 {
         let store = get_store().read();
-        Wire::length(&store, self.handle)
+        round_opt(Wire::length(&store, self.handle), mantissa)
     }
 
     /// Get the area (if closed)
@@ -1180,7 +1182,7 @@ impl PyWire {
     }
 
     fn __repr__(&self) -> String {
-        format!("Wire(closed={}, length={:.4})", self.IsClosed(), self.Length())
+        format!("Wire(closed={}, length={:.4})", self.IsClosed(), self.Length(None))
     }
 }
 
@@ -1549,9 +1551,10 @@ impl PyFace {
     }
 
     /// Get the area
-    fn Area(&self) -> f64 {
+    #[pyo3(signature = (mantissa=Some(6)))]
+    fn Area(&self, mantissa: Option<i32>) -> f64 {
         let store = get_store().read();
-        Face::area(&store, self.handle)
+        round_opt(Face::area(&store, self.handle), mantissa)
     }
 
     /// Get the perimeter
@@ -1855,7 +1858,7 @@ impl PyFace {
     }
 
     fn __repr__(&self) -> String {
-        format!("Face(area={:.4})", self.Area())
+        format!("Face(area={:.4})", self.Area(None))
     }
 }
 
@@ -2010,15 +2013,17 @@ impl PyCell {
     }
 
     /// Get the volume
-    fn Volume(&self) -> f64 {
+    #[pyo3(signature = (mantissa=Some(6)))]
+    fn Volume(&self, mantissa: Option<i32>) -> f64 {
         let store = get_store().read();
-        Cell::volume(&store, self.handle)
+        round_opt(Cell::volume(&store, self.handle), mantissa)
     }
 
     /// Get the surface area
-    fn Area(&self) -> f64 {
+    #[pyo3(signature = (mantissa=Some(6)))]
+    fn Area(&self, mantissa: Option<i32>) -> f64 {
         let store = get_store().read();
-        Cell::area(&store, self.handle)
+        round_opt(Cell::area(&store, self.handle), mantissa)
     }
 
     /// Get the center of mass
@@ -2143,7 +2148,7 @@ impl PyCell {
     }
 
     fn __repr__(&self) -> String {
-        format!("Cell(volume={:.4}, area={:.4})", self.Volume(), self.Area())
+        format!("Cell(volume={:.4}, area={:.4})", self.Volume(None), self.Area(None))
     }
 }
 
@@ -2184,15 +2189,17 @@ impl PyCellComplex {
     }
 
     /// Get the volume
-    fn Volume(&self) -> f64 {
+    #[pyo3(signature = (mantissa=Some(6)))]
+    fn Volume(&self, mantissa: Option<i32>) -> f64 {
         let store = get_store().read();
-        CellComplex::volume(&store, self.handle)
+        round_opt(CellComplex::volume(&store, self.handle), mantissa)
     }
 
     /// Get the area
-    fn Area(&self) -> f64 {
+    #[pyo3(signature = (mantissa=Some(6)))]
+    fn Area(&self, mantissa: Option<i32>) -> f64 {
         let store = get_store().read();
-        CellComplex::area(&store, self.handle)
+        round_opt(CellComplex::area(&store, self.handle), mantissa)
     }
 
     /// Get cells
@@ -2243,7 +2250,7 @@ impl PyCellComplex {
     }
 
     fn __repr__(&self) -> String {
-        format!("CellComplex(cells={}, volume={:.4})", self.NumCells(), self.Volume())
+        format!("CellComplex(cells={}, volume={:.4})", self.NumCells(), self.Volume(None))
     }
 }
 
