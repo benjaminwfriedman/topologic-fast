@@ -110,6 +110,20 @@ def test_index_and_issame_match():
     assert tf.Topology.IsSame(e, tf.Edge.ByStartVertexEndVertex(fvs[0], fvs[2])) is False
 
 
+def test_edge_extras_match():
+    from topologicpy.Edge import Edge as TE2
+    assert _vset(tf.Edge.Line(length=2, direction=[1, 0, 0])) == \
+        _tvset(TE2.Line(length=2, direction=[1, 0, 0]))
+    e = tf.Edge.ByStartVertexEndVertex(tf.Vertex.ByCoordinates(0, 0, 0),
+                                       tf.Vertex.ByCoordinates(2, 0, 0))
+    te = TE2.ByStartVertexEndVertex(TV.ByCoordinates(0, 0, 0), TV.ByCoordinates(2, 0, 0))
+    assert _vset(tf.Edge.NormalEdge(e, length=1, u=0.5)) == _tvset(TE2.NormalEdge(te, length=1, u=0.5))
+    eb = tf.Edge.ExternalBoundary(e)
+    assert tf.Topology.TypeAsString(eb) == "Cluster" and len(tf.Topology.Vertices(eb)) == 2
+    cl = tf.Cluster.ByVertices([tf.Vertex.ByCoordinates(0, 0, 0), tf.Vertex.ByCoordinates(5, 0, 0)])
+    assert tf.Edge.Length(tf.Edge.ByVerticesCluster(cl)) == 5.0
+
+
 def _vset(t):
     return sorted(tuple(round(c, 4) for c in tf.Vertex.Coordinates(v))
                   for v in tf.Topology.Vertices(t))

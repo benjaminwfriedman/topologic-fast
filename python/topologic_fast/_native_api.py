@@ -143,6 +143,44 @@ def _install_cell(Cell):
     _attach(Cell, {"Volume": Volume, "Area": Area, "Compactness": Compactness})
 
 
+def _install_edge_extras(ns):
+    """Remaining topologicpy-compatible Edge methods (Line, NormalEdge, etc.)."""
+    Edge, Vertex, Cluster, Topology = ns.Edge, ns.Vertex, ns.Cluster, ns.Topology
+
+    def Edge_Line(origin=None, length=1, direction=(1, 0, 0), placement="center", tolerance=0.0001):
+        ox, oy, oz = (0.0, 0.0, 0.0) if origin is None else tuple(origin.Coordinates())
+        dx, dy, dz = direction
+        dl = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        ux, uy, uz = dx / dl, dy / dl, dz / dl
+        if (placement or "center").lower() == "center":
+            s = (ox - ux * length / 2, oy - uy * length / 2, oz - uz * length / 2)
+            e = (ox + ux * length / 2, oy + uy * length / 2, oz + uz * length / 2)
+        else:
+            s, e = (ox, oy, oz), (ox + ux * length, oy + uy * length, oz + uz * length)
+        return Edge.ByStartVertexEndVertex(Vertex.ByCoordinates(*s), Vertex.ByCoordinates(*e))
+
+    def Edge_NormalEdge(edge, length=1.0, u=0.5, angle=0.0, tolerance=0.0001, silent=False):
+        p = edge.VertexByParameter(u)
+        px, py, pz = p.Coordinates()
+        nx, ny, nz = edge.Normal()  # in-plane perpendicular (angle=0 case)
+        end = Vertex.ByCoordinates(px + nx * length, py + ny * length, pz + nz * length)
+        return Edge.ByStartVertexEndVertex(p, end)
+
+    def Edge_ExternalBoundary(edge, tolerance=0.0001, silent=False):
+        return Cluster.ByVertices([edge.StartVertex(), edge.EndVertex()])
+
+    def Edge_ByVerticesCluster(cluster, tolerance=0.0001):
+        verts = Topology.Vertices(cluster)
+        if len(verts) < 2:
+            return None
+        return Edge.ByStartVertexEndVertex(verts[0], verts[1])
+
+    Edge.Line = staticmethod(Edge_Line)
+    Edge.ByVerticesCluster = staticmethod(Edge_ByVerticesCluster)
+    Edge.NormalEdge = hybridmethod(Edge_NormalEdge)
+    Edge.ExternalBoundary = hybridmethod(Edge_ExternalBoundary)
+
+
 def _install_indices_and_topology(ns):
     """Index lookups (Vertex/Edge) and Topology.IsSame — pure-Python helpers."""
     Vertex, Edge, Topology = ns.Vertex, ns.Edge, ns.Topology
@@ -333,4 +371,5 @@ def install(namespace):
     _install_wire(namespace.Wire)
     _install_constructors(namespace)
     _install_shapes(namespace)
+    _install_edge_extras(namespace)
     _install_indices_and_topology(namespace)
