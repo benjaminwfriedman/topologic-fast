@@ -385,6 +385,61 @@ def _install_merge_and_graph(ns):
     Graph.ClosenessCentrality = staticmethod(Graph_ClosenessCentrality)
 
 
+# Aperture registry: host-face UUID -> list of aperture topologies. Apertures are
+# a Python-level feature keyed by the stable kernel entity id (Topology.UUID).
+_APERTURES = {}
+
+
+def _install_apertures(ns):
+    """Topology.AddApertures / Apertures (Python-level, keyed by Topology.UUID)."""
+    Topology = ns.Topology
+
+    def _unit_normal(face):
+        nx, ny, nz = face.Normal()
+        m = math.sqrt(nx * nx + ny * ny + nz * nz) or 1.0
+        return nx / m, ny / m, nz / m
+
+    def AddApertures(topology, apertures, exclusive=False, subTopologyType=None,
+                     tolerance=0.0001, silent=False):
+        if not apertures:
+            return topology
+        host_faces = Topology.Faces(topology)
+        plane_tol = max(tolerance, 1e-4)
+        for ap in apertures:
+            anx, any_, anz = _unit_normal(ap)
+            acom = Topology.Centroid(ap)
+            ax, ay, az = acom.X(), acom.Y(), acom.Z()
+            for hf in host_faces:
+                hnx, hny, hnz = _unit_normal(hf)
+                if abs(anx * hnx + any_ * hny + anz * hnz) < 1.0 - 1e-3:
+                    continue  # normals not parallel
+                hcom = Topology.Centroid(hf)
+                dist = abs((ax - hcom.X()) * hnx + (ay - hcom.Y()) * hny + (az - hcom.Z()) * hnz)
+                if dist > plane_tol:
+                    continue  # aperture not coplanar with this host face
+                try:
+                    if not hf.ContainsPoint(ax, ay, az):
+                        continue
+                except Exception:
+                    pass
+                _APERTURES.setdefault(Topology.UUID(hf), []).append(ap)
+                break  # attach to the first matching host face
+        return topology
+
+    def Apertures(topology, subTopologyType="face"):
+        out = []
+        for hf in Topology.Faces(topology):
+            out.extend(_APERTURES.get(Topology.UUID(hf), []))
+        return out
+
+    def ApertureTopologies(topology, subTopologyType="face"):
+        return Apertures(topology, subTopologyType)
+
+    Topology.AddApertures = staticmethod(AddApertures)
+    Topology.Apertures = staticmethod(Apertures)
+    Topology.ApertureTopologies = staticmethod(ApertureTopologies)
+
+
 def _install_booleans(ns):
     """topologicpy-signature boolean ops over tf's fast kernel booleans."""
     Topology = ns.Topology
@@ -598,5 +653,6 @@ def install(namespace):
     _install_vertex_extras(namespace)
     _install_geometry_extras(namespace)
     _install_merge_and_graph(namespace)
+    _install_apertures(namespace)
     _install_booleans(namespace)
     _install_indices_and_topology(namespace)

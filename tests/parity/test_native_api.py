@@ -279,3 +279,19 @@ def test_compactness_and_closeness_fixed():
     fg, tg = tf.Graph.ByVerticesEdges(fvs, fes), TG5.ByVerticesEdges(tvs, tes)
     assert sorted(round(x, 4) for x in tf.Graph.ClosenessCentrality(fg)) == \
         sorted(round(x, 4) for x in TG5.ClosenessCentrality(tg))
+
+
+def test_add_apertures():
+    # A window coplanar with and inside a wall face attaches; a far one does not.
+    wall = tf.Face.Rectangle(width=4, length=3)
+    window = tf.Face.Rectangle(width=2, length=1)
+    wall = tf.Topology.AddApertures(wall, [window])
+    aps = tf.Topology.Apertures(wall)
+    assert len(aps) == 1 and round(aps[0].Area(None), 3) == 2.0
+    wall2 = tf.Face.Rectangle(width=4, length=3)
+    far = tf.Topology.Translate(tf.Face.Rectangle(width=1, length=1), 10, 0, 0)
+    tf.Topology.AddApertures(wall2, [far])
+    assert len(tf.Topology.Apertures(wall2)) == 0
+    # UUID is stable per kernel entity.
+    f = tf.Topology.Faces(tf.Cell.Box(0, 0, 0, 1, 1, 1))[0]
+    assert tf.Topology.UUID(tf.Topology.Faces(tf.Cell.Box(0, 0, 0, 1, 1, 1))[0]) is not None

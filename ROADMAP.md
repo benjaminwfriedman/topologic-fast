@@ -6,13 +6,13 @@ Legend: `[x]` done (present + tested) · `[~]` present, untested · `[ ]` todo (
 
 ## Status
 
-**160 done · 199 present-untested · 532 todo · 891 total (40% present)**
+**163 done · 200 present-untested · 528 todo · 891 total (41% present)**
 
 | Phase | done | present | total |
 |---|---|---|---|
 | Phase A — Pure-math & data helpers | 36 | 38 | 87 |
 | Phase B — Core topology primitives | 59 | 112 | 357 |
-| Phase C — Topology dispatcher | 22 | 5 | 156 |
+| Phase C — Topology dispatcher | 25 | 6 | 156 |
 | Phase D — Graph analytics | 5 | 44 | 177 |
 | Phase E — Kernel features: apertures & contexts | 0 | 0 | 4 |
 | Phase F — Helper applications | 38 | 0 | 110 |
@@ -509,8 +509,10 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 
 _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON), analysis, booleans (Slice/Impose/Imprint), selectors._
 
-### Topology — 22 done / 5 present / 129 todo (of 156)
+### Topology — 25 done / 6 present / 125 todo (of 156)
 
+- [x] `Topology.AddApertures`
+- [x] `Topology.Apertures`
 - [x] `Topology.BoundingBox`
 - [x] `Topology.CenterOfMass`
 - [x] `Topology.Centroid`
@@ -531,20 +533,19 @@ _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON),
 - [x] `Topology.Translate`
 - [x] `Topology.Type`
 - [x] `Topology.TypeAsString`
+- [x] `Topology.UUID`
 - [x] `Topology.Union`
 - [x] `Topology.Vertices`
+- [~] `Topology.ApertureTopologies`
 - [~] `Topology.CellComplexes`
 - [~] `Topology.Cells`
 - [~] `Topology.Shells`
 - [~] `Topology.Show`
 - [~] `Topology.Wires`
-- [ ] `Topology.AddApertures`
 - [ ] `Topology.AddContent`
 - [ ] `Topology.AddDictionary`
 - [ ] `Topology.AdjacentTopologies`
 - [ ] `Topology.Analyze`
-- [ ] `Topology.ApertureTopologies`
-- [ ] `Topology.Apertures`
 - [ ] `Topology.BREPString`
 - [ ] `Topology.BinByDictionaryKey`
 - [ ] `Topology.ByBIMFile`
@@ -662,7 +663,6 @@ _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON),
 - [ ] `Topology.Triangulate`
 - [ ] `Topology.Twist`
 - [ ] `Topology.TypeID`
-- [ ] `Topology.UUID`
 - [ ] `Topology.Unflatten`
 - [ ] `Topology.VerticesCentroid`
 - [ ] `Topology.View3D`

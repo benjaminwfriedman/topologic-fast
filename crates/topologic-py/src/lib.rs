@@ -2312,6 +2312,20 @@ fn handle_type_code(h: &TopologyHandle) -> i64 {
     }
 }
 
+/// Stable per-entity id (the kernel TopologyId) for any topology handle.
+fn handle_id(h: &TopologyHandle) -> u64 {
+    match h {
+        TopologyHandle::Vertex(x) => x.id().raw(),
+        TopologyHandle::Edge(x) => x.id().raw(),
+        TopologyHandle::Wire(x) => x.id().raw(),
+        TopologyHandle::Face(x) => x.id().raw(),
+        TopologyHandle::Shell(x) => x.id().raw(),
+        TopologyHandle::Cell(x) => x.id().raw(),
+        TopologyHandle::CellComplex(x) => x.id().raw(),
+        TopologyHandle::Cluster(x) => x.id().raw(),
+    }
+}
+
 #[pyclass(name = "Topology")]
 pub struct PyTopology;
 
@@ -2449,6 +2463,13 @@ impl PyTopology {
     #[staticmethod]
     fn TypeAsString(topology: &Bound<'_, PyAny>) -> PyResult<String> {
         Ok(handle_type_name(&any_to_handle(topology)?).to_string())
+    }
+
+    /// A stable per-entity id (the kernel TopologyId) for any topology. Two
+    /// references to the same kernel entity share the same UUID.
+    #[staticmethod]
+    fn UUID(topology: &Bound<'_, PyAny>) -> PyResult<u64> {
+        Ok(handle_id(&any_to_handle(topology)?))
     }
 
     /// The topologicpy integer type code (Vertex=1, Edge=2, Wire=4, Face=8,
