@@ -95,6 +95,11 @@ class _TopologyUtility:
 
 class _CellUtility:
     @staticmethod
+    def Volume(cell, mantissa=None):
+        v = cell.Volume(None)  # raw; topologicpy rounds afterwards
+        return round(v, mantissa) if mantissa is not None else v
+
+    @staticmethod
     def Contains(cell, vertex, tolerance=0.0001):
         # topologic_core returns a containment enum; topologicpy treats truthy as inside.
         try:
@@ -103,19 +108,32 @@ class _CellUtility:
             return False
 
 
+class _CellComplexUtility:
+    @staticmethod
+    def Volume(cell_complex, mantissa=None):
+        v = cell_complex.Volume(None)
+        return round(v, mantissa) if mantissa is not None else v
+
+
 class _EdgeUtility:
     @staticmethod
-    def Length(edge, mantissa=6):
-        return round(edge.Length(), mantissa)
+    def Length(edge, mantissa=None):
+        v = edge.Length(None)
+        return round(v, mantissa) if mantissa is not None else v
 
 
 class _FaceUtility:
     @staticmethod
-    def Area(face, mantissa=6):
-        return round(face.Area(), mantissa)
+    def Area(face, mantissa=None):
+        v = face.Area(None)
+        return round(v, mantissa) if mantissa is not None else v
 
     @staticmethod
     def Normal(face):
+        return list(face.Normal())
+
+    @staticmethod
+    def NormalAtParameters(face, u=0.5, v=0.5, *args, **kwargs):
         return list(face.Normal())
 
 
@@ -128,6 +146,7 @@ _ADAPTERS = {
     "Topology": _TfTopology,
     "TopologyUtility": _TopologyUtility,
     "CellUtility": _CellUtility,
+    "CellComplexUtility": _CellComplexUtility,
     "EdgeUtility": _EdgeUtility,
     "FaceUtility": _FaceUtility,
 }
@@ -135,7 +154,7 @@ _ADAPTERS = {
 # Namespaces still needing kernel work.
 _PENDING = [
     "Aperture", "Context",
-    "VertexUtility", "WireUtility", "ShellUtility", "CellComplexUtility",
+    "VertexUtility", "WireUtility", "ShellUtility",
     "ClusterUtility", "GraphUtility",
     "IntAttribute", "DoubleAttribute", "StringAttribute", "ListAttribute",
 ]
