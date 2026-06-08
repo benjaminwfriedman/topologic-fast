@@ -6,12 +6,12 @@ Legend: `[x]` done (present + tested) · `[~]` present, untested · `[ ]` todo (
 
 ## Status
 
-**155 done · 203 present-untested · 533 todo · 891 total (40% present)**
+**158 done · 201 present-untested · 532 todo · 891 total (40% present)**
 
 | Phase | done | present | total |
 |---|---|---|---|
-| Phase A — Pure-math & data helpers | 34 | 40 | 87 |
-| Phase B — Core topology primitives | 57 | 113 | 357 |
+| Phase A — Pure-math & data helpers | 36 | 38 | 87 |
+| Phase B — Core topology primitives | 58 | 113 | 357 |
 | Phase C — Topology dispatcher | 22 | 5 | 156 |
 | Phase D — Graph analytics | 4 | 45 | 177 |
 | Phase E — Kernel features: apertures & contexts | 0 | 0 | 4 |
@@ -88,16 +88,17 @@ _Fast: pure Python via _pyhelpers / thin Rust. No geometry kernel._
 - [x] `Grid.VerticesByDistances`
 - [ ] `Grid.VerticesByParameters`
 
-### Dictionary — 2 done / 18 present / 9 todo (of 29)
+### Dictionary — 4 done / 16 present / 9 todo (of 29)
 
 - [x] `Dictionary.ByKeysValues`
 - [x] `Dictionary.ByPythonDictionary`
+- [x] `Dictionary.Keys`
+- [x] `Dictionary.ValueAtKey`
 - [~] `Dictionary.ByKeyValue`
 - [~] `Dictionary.ByMergedDictionaries`
 - [~] `Dictionary.Copy`
 - [~] `Dictionary.Difference`
 - [~] `Dictionary.Intersection`
-- [~] `Dictionary.Keys`
 - [~] `Dictionary.KeysAtValue`
 - [~] `Dictionary.Merge`
 - [~] `Dictionary.PythonDictionary`
@@ -107,7 +108,6 @@ _Fast: pure Python via _pyhelpers / thin Rust. No geometry kernel._
 - [~] `Dictionary.SymDif`
 - [~] `Dictionary.SymmetricDifference`
 - [~] `Dictionary.Union`
-- [~] `Dictionary.ValueAtKey`
 - [~] `Dictionary.Values`
 - [~] `Dictionary.ValuesAtKeys`
 - [ ] `Dictionary.AdjacencyDictionary`
@@ -387,11 +387,12 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 - [ ] `Shell.Square`
 - [ ] `Shell.Voronoi`
 
-### Cell — 10 done / 9 present / 35 todo (of 54)
+### Cell — 11 done / 9 present / 34 todo (of 54)
 
 - [x] `Cell.Area`
 - [x] `Cell.Box`
 - [x] `Cell.ByFaces`
+- [x] `Cell.ByThickenedFace`
 - [x] `Cell.Compactness`
 - [x] `Cell.Cylinder`
 - [x] `Cell.Decompose`
@@ -411,7 +412,6 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 - [ ] `Cell.ByFacesCluster`
 - [ ] `Cell.ByOffset`
 - [ ] `Cell.ByShells`
-- [ ] `Cell.ByThickenedFace`
 - [ ] `Cell.ByThickenedShell`
 - [ ] `Cell.ByWires`
 - [ ] `Cell.ByWiresCluster`

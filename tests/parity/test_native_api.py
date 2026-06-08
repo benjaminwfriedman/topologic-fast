@@ -246,3 +246,18 @@ def test_decompose_matches():
         tl = len(td[k]) if isinstance(td[k], list) else td[k]
         assert fl == tl, k
     assert len(tf.Topology.Decompose(fcc)["cells"]) == 2
+
+
+def test_thickened_face_and_present_methods():
+    from topologicpy.Cell import Cell as TC4
+    from topologicpy.Face import Face as TF4
+    ff, tfa = tf.Face.Rectangle(width=2, length=2), TF4.Rectangle(width=2, length=2)
+    for both in (True, False):
+        fc = tf.Cell.ByThickenedFace(ff, thickness=0.5, bothSides=both)
+        tc = TC4.ByThickenedFace(tfa, thickness=0.5, bothSides=both)
+        assert round(fc.Volume(), 4) == round(TC4.Volume(tc), 4) == 2.0
+    # Dictionary static-style calls match topologicpy
+    from topologicpy.Dictionary import Dictionary as TD4
+    d, td = tf.Dictionary.ByKeysValues(["a", "b"], [1, 2]), TD4.ByKeysValues(["a", "b"], [1, 2])
+    assert sorted(tf.Dictionary.Keys(d)) == sorted(TD4.Keys(td))
+    assert tf.Dictionary.ValueAtKey(d, "a") == TD4.ValueAtKey(td, "a") == 1

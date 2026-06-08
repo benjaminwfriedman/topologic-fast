@@ -226,6 +226,15 @@ def _install_geometry_extras(ns):
     def Cell_SurfaceArea(cell, mantissa=6):
         return cell.Area(mantissa)
 
+    def Cell_ByThickenedFace(face, thickness=1.0, bothSides=True, wSides=1,
+                             reverse=False, tolerance=0.0001, silent=False):
+        t = -thickness if reverse else thickness
+        if bothSides:
+            nx, ny, nz = face.Normal()
+            shifted = Topology.Translate(face, -nx * t / 2.0, -ny * t / 2.0, -nz * t / 2.0)
+            return Cell.Prism(shifted, abs(t))
+        return Cell.Prism(face, t)
+
     def Face_Centroid(face, mantissa=6):
         return Topology.Centroid(face)
 
@@ -290,6 +299,7 @@ def _install_geometry_extras(ns):
         return None
 
     Cell.SurfaceArea = staticmethod(Cell_SurfaceArea)
+    Cell.ByThickenedFace = staticmethod(Cell_ByThickenedFace)
     Face.Centroid = staticmethod(Face_Centroid)
     Topology.BoundingBox = staticmethod(Topology_BoundingBox)
     Cell.Decompose = staticmethod(Cell_Decompose)
