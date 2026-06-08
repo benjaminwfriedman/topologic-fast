@@ -202,6 +202,75 @@ def _install_constructors(ns):
         Cell.ByFaces = staticmethod(Cell_ByFaces)
 
 
+def _install_shapes(ns):
+    """Topologicpy-compatible shape primitives over tf's fast constructors.
+
+    The geometry matches topologicpy for the default ``placement='center'`` /
+    ``direction=[0,0,1]`` case; these wrappers map topologicpy's signatures onto
+    tf's. (Cell.Sphere is intentionally NOT exposed here — tf tessellates it
+    differently from topologicpy.)
+    """
+    Wire, Face, Cell = ns.Wire, ns.Face, ns.Cell
+    _w_rect = Wire.Rectangle
+    _w_circle = Wire.Circle
+    _f_rect = Face.Rectangle
+    _c_cyl = Cell.Cylinder
+
+    def _dir(direction):
+        return None if list(direction) == [0, 0, 1] else list(direction)
+
+    def Wire_Rectangle(origin=None, width=1.0, length=1.0, diagonals=False,
+                       direction=(0, 0, 1), placement="center", angTolerance=0.1,
+                       tolerance=0.0001, silent=False):
+        kw = dict(origin=origin, width=width, length=length, placement=placement, tolerance=tolerance)
+        if _dir(direction) is not None:
+            kw["direction"] = _dir(direction)
+        return _w_rect(**kw)
+
+    def Wire_Circle(origin=None, radius=0.5, sides=16, spokes=False, fromAngle=0.0,
+                    toAngle=360.0, close=True, direction=(0, 0, 1), placement="center",
+                    tolerance=0.0001, silent=False):
+        kw = dict(origin=origin, radius=radius, sides=sides, from_angle=fromAngle,
+                  to_angle=toAngle, close=close, placement=placement, tolerance=tolerance)
+        if _dir(direction) is not None:
+            kw["direction"] = _dir(direction)
+        return _w_circle(**kw)
+
+    def _rect_tpy(origin=None, width=1.0, length=1.0, direction=(0, 0, 1),
+                  placement="center", tolerance=0.0001, silent=True):
+        kw = dict(width=width, length=length, origin=origin, placement=placement, tolerance=tolerance)
+        if _dir(direction) is not None:
+            kw["direction"] = _dir(direction)
+        return _f_rect(**kw)
+
+    def Face_Rectangle(*args, **kwargs):
+        # tf-native Face.Rectangle(x, y, z, width, length, ...) leads with numbers;
+        # topologicpy Face.Rectangle(origin, width, length, ...) leads with a Vertex/None.
+        if args and isinstance(args[0], (int, float)):
+            return _f_rect(*args, **kwargs)
+        return _rect_tpy(*args, **kwargs)
+
+    def _cyl_tpy(origin=None, radius=0.5, height=1, uSides=16, vSides=1,
+                 direction=(0, 0, 1), placement="center", mantissa=6, tolerance=0.0001):
+        ox, oy, oz = (0.0, 0.0, 0.0) if origin is None else tuple(origin.Coordinates())
+        p = (placement or "center").lower()
+        # tf's center_z is the base; topologicpy 'center' centers the body.
+        cz = oz - height / 2.0 if p == "center" else oz
+        return _c_cyl(ox, oy, cz, radius, height, uSides)
+
+    def Cell_Cylinder(*args, **kwargs):
+        # tf-native Cell.Cylinder(center_x, center_y, center_z, radius, height, segments)
+        # leads with numbers; topologicpy Cell.Cylinder(origin, ...) leads with Vertex/None.
+        if args and isinstance(args[0], (int, float)):
+            return _c_cyl(*args, **kwargs)
+        return _cyl_tpy(*args, **kwargs)
+
+    Wire.Rectangle = staticmethod(Wire_Rectangle)
+    Wire.Circle = staticmethod(Wire_Circle)
+    Face.Rectangle = staticmethod(Face_Rectangle)
+    Cell.Cylinder = staticmethod(Cell_Cylinder)
+
+
 def _attach(cls, methods):
     for name, fn in methods.items():
         setattr(cls, name, hybridmethod(fn))
@@ -215,3 +284,4 @@ def install(namespace):
     _install_cell(namespace.Cell)
     _install_wire(namespace.Wire)
     _install_constructors(namespace)
+    _install_shapes(namespace)

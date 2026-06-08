@@ -89,6 +89,35 @@ def test_cell_measures_match():
     assert round(rebuilt.Volume(), 3) == 24.0
 
 
+def _vset(t):
+    return sorted(tuple(round(c, 4) for c in tf.Vertex.Coordinates(v))
+                  for v in tf.Topology.Vertices(t))
+
+
+def _tvset(t):
+    return sorted(tuple(round(c, 4) for c in TV.Coordinates(v)) for v in TT.Vertices(t))
+
+
+def test_wire_and_face_shapes_match():
+    from topologicpy.Wire import Wire as TW
+    from topologicpy.Face import Face as TF2
+    assert _vset(tf.Wire.Rectangle(width=2, length=3)) == _tvset(TW.Rectangle(width=2, length=3))
+    assert _vset(tf.Wire.Circle(radius=1, sides=12)) == _tvset(TW.Circle(radius=1, sides=12))
+    # camelCase fromAngle/toAngle kwargs (topologicpy signature) accepted
+    assert _vset(tf.Wire.Circle(radius=1, sides=8, fromAngle=0, toAngle=360)) == \
+        _tvset(TW.Circle(radius=1, sides=8, fromAngle=0, toAngle=360))
+    assert _vset(tf.Face.Rectangle(width=2, length=3)) == _tvset(TF2.Rectangle(width=2, length=3))
+
+
+def test_cell_cylinder_matches():
+    fcyl = tf.Cell.Cylinder(radius=1, height=2, uSides=16)
+    tcyl = TC.Cylinder(radius=1, height=2, uSides=16)
+    assert round(fcyl.Volume(), 4) == round(TC.Volume(tcyl), 4)
+    f_com = [round(c, 4) for c in tf.Vertex.Coordinates(tf.Topology.Centroid(fcyl))]
+    t_com = [round(c, 4) for c in TV.Coordinates(TT.Centroid(tcyl))]
+    assert f_com == t_com == [0.0, 0.0, 0.0]  # 'center' placement
+
+
 def _bench(op, n=4000):
     op()
     t0 = time.perf_counter()
