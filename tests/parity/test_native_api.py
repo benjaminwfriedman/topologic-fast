@@ -207,3 +207,14 @@ def test_native_is_faster(name, native, reference):
     t_ref = _bench(lambda: reference(b))
     # The native path must be clearly faster (it is typically 5-200x).
     assert t_native < t_ref, f"{name}: native {t_native*1e6:.2f}us not < topologicpy {t_ref*1e6:.2f}us"
+
+
+def test_geometry_extras_match():
+    from topologicpy.Cell import Cell as TC2
+    fbox, tbox = _fbox(), _tbox()
+    assert tf.Cell.SurfaceArea(fbox) == TC2.SurfaceArea(tbox) == 52.0
+    assert round(tf.Cell.Volume(tf.Topology.BoundingBox(fbox)), 3) == 24.0
+    fd, td = tf.Cell.Decompose(fbox), TC2.Decompose(tbox)
+    assert set(fd.keys()) == set(td.keys())
+    for k in fd:
+        assert len(fd[k]) == len(td[k]), k

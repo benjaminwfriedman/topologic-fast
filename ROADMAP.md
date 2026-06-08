@@ -6,13 +6,13 @@ Legend: `[x]` done (present + tested) · `[~]` present, untested · `[ ]` todo (
 
 ## Status
 
-**146 done · 203 present-untested · 542 todo · 891 total (39% present)**
+**149 done · 203 present-untested · 539 todo · 891 total (40% present)**
 
 | Phase | done | present | total |
 |---|---|---|---|
 | Phase A — Pure-math & data helpers | 34 | 40 | 87 |
-| Phase B — Core topology primitives | 54 | 113 | 357 |
-| Phase C — Topology dispatcher | 18 | 5 | 156 |
+| Phase B — Core topology primitives | 56 | 113 | 357 |
+| Phase C — Topology dispatcher | 19 | 5 | 156 |
 | Phase D — Graph analytics | 2 | 45 | 177 |
 | Phase E — Kernel features: apertures & contexts | 0 | 0 | 4 |
 | Phase F — Helper applications | 38 | 0 | 110 |
@@ -387,15 +387,17 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 - [ ] `Shell.Square`
 - [ ] `Shell.Voronoi`
 
-### Cell — 8 done / 9 present / 37 todo (of 54)
+### Cell — 10 done / 9 present / 35 todo (of 54)
 
 - [x] `Cell.Area`
 - [x] `Cell.Box`
 - [x] `Cell.ByFaces`
 - [x] `Cell.Compactness`
 - [x] `Cell.Cylinder`
+- [x] `Cell.Decompose`
 - [x] `Cell.Prism`
 - [x] `Cell.Sphere`
+- [x] `Cell.SurfaceArea`
 - [x] `Cell.Volume`
 - [~] `Cell.ByShell`
 - [~] `Cell.Cone`
@@ -419,7 +421,6 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 - [ ] `Cell.ContainmentStatus`
 - [ ] `Cell.CrossShape`
 - [ ] `Cell.Cube`
-- [ ] `Cell.Decompose`
 - [ ] `Cell.Dodecahedron`
 - [ ] `Cell.Egg`
 - [ ] `Cell.ExternalBoundary`
@@ -438,7 +439,6 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 - [ ] `Cell.RemoveCollinearEdges`
 - [ ] `Cell.SHS`
 - [ ] `Cell.Sets`
-- [ ] `Cell.SurfaceArea`
 - [ ] `Cell.TShape`
 - [ ] `Cell.Tetrahedron`
 - [ ] `Cell.Tube`
@@ -509,8 +509,9 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 
 _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON), analysis, booleans (Slice/Impose/Imprint), selectors._
 
-### Topology — 18 done / 5 present / 133 todo (of 156)
+### Topology — 19 done / 5 present / 132 todo (of 156)
 
+- [x] `Topology.BoundingBox`
 - [x] `Topology.CenterOfMass`
 - [x] `Topology.Centroid`
 - [x] `Topology.Dictionary`
@@ -543,7 +544,6 @@ _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON),
 - [ ] `Topology.Apertures`
 - [ ] `Topology.BREPString`
 - [ ] `Topology.BinByDictionaryKey`
-- [ ] `Topology.BoundingBox`
 - [ ] `Topology.ByBIMFile`
 - [ ] `Topology.ByBIMPath`
 - [ ] `Topology.ByBIMString`

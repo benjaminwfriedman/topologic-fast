@@ -203,6 +203,59 @@ def _install_edge_extras(ns):
     Edge.ExternalBoundary = hybridmethod(Edge_ExternalBoundary)
 
 
+def _classify_tilt(face, tilt_angle):
+    """Classify a face as 'top'/'bottom'/'vertical'/'inclined' by its normal."""
+    nx, ny, nz = face.Normal()
+    mag = math.sqrt(nx * nx + ny * ny + nz * nz) or 1.0
+    nz /= mag
+    c = math.cos(math.radians(tilt_angle))
+    s = math.sin(math.radians(tilt_angle))
+    if nz > c:
+        return "top"
+    if nz < -c:
+        return "bottom"
+    if abs(nz) < s:
+        return "vertical"
+    return "inclined"
+
+
+def _install_geometry_extras(ns):
+    """SurfaceArea, BoundingBox, Centroid, Decompose (pure-Python compositions)."""
+    Cell, Face, Topology, Vertex = ns.Cell, ns.Face, ns.Topology, ns.Vertex
+
+    def Cell_SurfaceArea(cell, mantissa=6):
+        return cell.Area(mantissa)
+
+    def Face_Centroid(face, mantissa=6):
+        return Topology.Centroid(face)
+
+    def Topology_BoundingBox(topology, optimize=0, axes="xyz", mantissa=6, tolerance=0.0001, silent=False):
+        verts = Topology.Vertices(topology)
+        if not verts:
+            return None
+        xs = [v.X() for v in verts]
+        ys = [v.Y() for v in verts]
+        zs = [v.Z() for v in verts]
+        minx, maxx, miny, maxy, minz, maxz = min(xs), max(xs), min(ys), max(ys), min(zs), max(zs)
+        w, l, h = maxx - minx, maxy - miny, maxz - minz
+        return Cell.Box(minx, miny, minz, w or tolerance, l or tolerance, h or tolerance)
+
+    def Cell_Decompose(cell, tiltAngle=10, tolerance=0.0001):
+        res = {k: [] for k in ("verticalFaces", "topHorizontalFaces", "bottomHorizontalFaces",
+                               "inclinedFaces", "verticalApertures", "topHorizontalApertures",
+                               "bottomHorizontalApertures", "inclinedApertures")}
+        cat_map = {"top": "topHorizontalFaces", "bottom": "bottomHorizontalFaces",
+                   "vertical": "verticalFaces", "inclined": "inclinedFaces"}
+        for f in Topology.Faces(cell):
+            res[cat_map[_classify_tilt(f, tiltAngle)]].append(f)
+        return res
+
+    Cell.SurfaceArea = staticmethod(Cell_SurfaceArea)
+    Face.Centroid = staticmethod(Face_Centroid)
+    Topology.BoundingBox = staticmethod(Topology_BoundingBox)
+    Cell.Decompose = staticmethod(Cell_Decompose)
+
+
 def _install_booleans(ns):
     """topologicpy-signature boolean ops over tf's fast kernel booleans."""
     Topology = ns.Topology
@@ -414,5 +467,6 @@ def install(namespace):
     _install_shapes(namespace)
     _install_edge_extras(namespace)
     _install_vertex_extras(namespace)
+    _install_geometry_extras(namespace)
     _install_booleans(namespace)
     _install_indices_and_topology(namespace)
