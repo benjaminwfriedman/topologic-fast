@@ -69,6 +69,7 @@ def _install_edge(Edge):
     _len = Edge.Length
     _sv, _ev = Edge.StartVertex, Edge.EndVertex
     _dir = Edge.Direction
+    _vbp = Edge.VertexByParameter
 
     def Length(edge, mantissa=6):
         return _round(_len(edge), mantissa)
@@ -82,8 +83,31 @@ def _install_edge(Edge):
     def Direction(edge, mantissa=6):
         return [round(c, mantissa) for c in _dir(edge)]
 
+    def VertexByParameter(edge, u=0.0):
+        return _vbp(edge, u)
+
     _attach(Edge, {"Length": Length, "StartVertex": StartVertex,
-                   "EndVertex": EndVertex, "Direction": Direction})
+                   "EndVertex": EndVertex, "Direction": Direction,
+                   "VertexByParameter": VertexByParameter})
+
+
+def _coincident(a, b, tolerance):
+    ax, ay, az = a.Coordinates()
+    bx, by, bz = b.Coordinates()
+    return abs(ax - bx) <= tolerance and abs(ay - by) <= tolerance and abs(az - bz) <= tolerance
+
+
+def _install_wire(Wire):
+    _len = Wire.Length
+    _closed = Wire.IsClosed
+
+    def Length(wire, mantissa=6):
+        return _round(_len(wire), mantissa)
+
+    def IsClosed(wire):
+        return _closed(wire)
+
+    _attach(Wire, {"Length": Length, "IsClosed": IsClosed})
 
 
 def _install_face(Face):
@@ -119,13 +143,37 @@ def _install_cell(Cell):
     _attach(Cell, {"Volume": Volume, "Area": Area, "Compactness": Compactness})
 
 
-def _install_wire(Wire):
-    _len = Wire.Length
+def _install_indices_and_topology(ns):
+    """Index lookups (Vertex/Edge) and Topology.IsSame — pure-Python helpers."""
+    Vertex, Edge, Topology = ns.Vertex, ns.Edge, ns.Topology
 
-    def Length(wire, mantissa=6):
-        return _round(_len(wire), mantissa)
+    def Vertex_Index(vertex, vertices, strict=False, tolerance=0.0001):
+        for i, cand in enumerate(vertices):
+            if _coincident(vertex, cand, tolerance):
+                return i
+        return None
 
-    _attach(Wire, {"Length": Length})
+    def Edge_Index(edge, edges, strict=False, tolerance=0.0001):
+        es, ee = edge.StartVertex(), edge.EndVertex()
+        for i, cand in enumerate(edges):
+            cs, ce = cand.StartVertex(), cand.EndVertex()
+            same = _coincident(es, cs, tolerance) and _coincident(ee, ce, tolerance)
+            if not strict:
+                same = same or (_coincident(es, ce, tolerance) and _coincident(ee, cs, tolerance))
+            if same:
+                return i
+        return None
+
+    def Topology_IsSame(topologyA, topologyB, silent=False):
+        try:
+            return bool(topologyA == topologyB)
+        except Exception:
+            return topologyA is topologyB
+
+    Vertex.Index = staticmethod(Vertex_Index)
+    Edge.Index = staticmethod(Edge_Index)
+    if not hasattr(Topology, "IsSame"):
+        Topology.IsSame = staticmethod(Topology_IsSame)
 
 
 def _install_constructors(ns):
@@ -285,3 +333,4 @@ def install(namespace):
     _install_wire(namespace.Wire)
     _install_constructors(namespace)
     _install_shapes(namespace)
+    _install_indices_and_topology(namespace)

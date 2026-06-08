@@ -89,6 +89,27 @@ def test_cell_measures_match():
     assert round(rebuilt.Volume(), 3) == 24.0
 
 
+def test_edge_wire_accessors():
+    e = tf.Edge.ByStartVertexEndVertex(tf.Vertex.ByCoordinates(0, 0, 0),
+                                       tf.Vertex.ByCoordinates(2, 0, 0))
+    assert tf.Vertex.Coordinates(tf.Edge.VertexByParameter(e, 0.5)) == [1.0, 0.0, 0.0]
+    assert tf.Vertex.Coordinates(e.VertexByParameter(0.5)) == [1.0, 0.0, 0.0]
+    w = tf.Wire.Rectangle(width=2, length=2)
+    assert tf.Wire.IsClosed(w) is True and w.IsClosed() is True
+
+
+def test_index_and_issame_match():
+    from topologicpy.Vertex import Vertex as TV2
+    fvs = [tf.Vertex.ByCoordinates(0, 0, 0), tf.Vertex.ByCoordinates(1, 1, 1),
+           tf.Vertex.ByCoordinates(2, 2, 2)]
+    tvs = [TV2.ByCoordinates(0, 0, 0), TV2.ByCoordinates(1, 1, 1), TV2.ByCoordinates(2, 2, 2)]
+    assert tf.Vertex.Index(tf.Vertex.ByCoordinates(1, 1, 1), fvs) == TV2.Index(TV2.ByCoordinates(1, 1, 1), tvs) == 1
+    assert tf.Vertex.Index(tf.Vertex.ByCoordinates(9, 9, 9), fvs) == TV2.Index(TV2.ByCoordinates(9, 9, 9), tvs)
+    e = tf.Edge.ByStartVertexEndVertex(fvs[0], fvs[1])
+    assert tf.Topology.IsSame(e, e) is True
+    assert tf.Topology.IsSame(e, tf.Edge.ByStartVertexEndVertex(fvs[0], fvs[2])) is False
+
+
 def _vset(t):
     return sorted(tuple(round(c, 4) for c in tf.Vertex.Coordinates(v))
                   for v in tf.Topology.Vertices(t))
