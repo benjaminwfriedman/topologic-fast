@@ -218,3 +218,16 @@ def test_geometry_extras_match():
     assert set(fd.keys()) == set(td.keys())
     for k in fd:
         assert len(fd[k]) == len(td[k]), k
+
+
+def test_merge_and_graph_distances():
+    b1, b2 = tf.Cell.Box(0, 0, 0, 2, 2, 2), tf.Cell.Box(0, 0, 2, 2, 2, 2)
+    sm = tf.Topology.SelfMerge(tf.Cluster.ByCells([b1, b2]))
+    assert tf.Topology.TypeAsString(sm) == "CellComplex" and len(tf.Topology.Faces(sm)) == 11
+    mg = tf.Topology.Merge(tf.Cell.Box(0, 0, 0, 2, 2, 2), tf.Cell.Box(0, 0, 2, 2, 2, 2))
+    assert tf.Topology.TypeAsString(mg) == "CellComplex" and len(tf.Topology.Faces(mg)) == 11
+    vs = [tf.Vertex.ByCoordinates(0, 0, 0), tf.Vertex.ByCoordinates(1, 0, 0), tf.Vertex.ByCoordinates(1, 1, 0)]
+    es = [tf.Edge.ByStartVertexEndVertex(vs[0], vs[1]), tf.Edge.ByStartVertexEndVertex(vs[1], vs[2])]
+    g = tf.Graph.ByVerticesEdges(vs, es)
+    assert tf.Graph.TopologicalDistance(g, vs[0], vs[2]) == 2
+    assert tf.Graph.MetricDistance(g, vs[0], vs[2]) == 2.0

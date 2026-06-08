@@ -6,14 +6,14 @@ Legend: `[x]` done (present + tested) · `[~]` present, untested · `[ ]` todo (
 
 ## Status
 
-**149 done · 203 present-untested · 539 todo · 891 total (40% present)**
+**153 done · 203 present-untested · 535 todo · 891 total (40% present)**
 
 | Phase | done | present | total |
 |---|---|---|---|
 | Phase A — Pure-math & data helpers | 34 | 40 | 87 |
 | Phase B — Core topology primitives | 56 | 113 | 357 |
-| Phase C — Topology dispatcher | 19 | 5 | 156 |
-| Phase D — Graph analytics | 2 | 45 | 177 |
+| Phase C — Topology dispatcher | 21 | 5 | 156 |
+| Phase D — Graph analytics | 4 | 45 | 177 |
 | Phase E — Kernel features: apertures & contexts | 0 | 0 | 4 |
 | Phase F — Helper applications | 38 | 0 | 110 |
 
@@ -509,7 +509,7 @@ _Mix of pure-Rust (hot: readers/measures/constructors) and thin Python (cold tai
 
 _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON), analysis, booleans (Slice/Impose/Imprint), selectors._
 
-### Topology — 19 done / 5 present / 132 todo (of 156)
+### Topology — 21 done / 5 present / 130 todo (of 156)
 
 - [x] `Topology.BoundingBox`
 - [x] `Topology.CenterOfMass`
@@ -521,8 +521,10 @@ _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON),
 - [x] `Topology.Intersect`
 - [x] `Topology.IsInstance`
 - [x] `Topology.IsSame`
+- [x] `Topology.Merge`
 - [x] `Topology.Rotate`
 - [x] `Topology.Scale`
+- [x] `Topology.SelfMerge`
 - [x] `Topology.SetDictionary`
 - [x] `Topology.SubTopologies`
 - [x] `Topology.Translate`
@@ -606,7 +608,6 @@ _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON),
 - [ ] `Topology.JSONString`
 - [ ] `Topology.LargestFaces`
 - [ ] `Topology.LongestEdges`
-- [ ] `Topology.Merge`
 - [ ] `Topology.MergeAll`
 - [ ] `Topology.Mesh`
 - [ ] `Topology.MeshData`
@@ -633,7 +634,6 @@ _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON),
 - [ ] `Topology.RotateByEulerAngles`
 - [ ] `Topology.RotateByQuaternion`
 - [ ] `Topology.SelectSubTopology`
-- [ ] `Topology.SelfMerge`
 - [ ] `Topology.SetOntology`
 - [ ] `Topology.SetSnapshot`
 - [ ] `Topology.SharedEdges`
@@ -672,10 +672,12 @@ _The 156-method hub: navigation/transform done; remaining = I/O (BREP/OBJ/JSON),
 
 _A full graph-analytics library (centralities, communities, flows, isomorphism). Real algorithm work; tf.Graph already has a base._
 
-### Graph — 2 done / 45 present / 130 todo (of 177)
+### Graph — 4 done / 45 present / 128 todo (of 177)
 
 - [x] `Graph.ByTopology`
 - [x] `Graph.ByVerticesEdges`
+- [x] `Graph.MetricDistance`
+- [x] `Graph.TopologicalDistance`
 - [~] `Graph.AddEdge`
 - [~] `Graph.AddVertex`
 - [~] `Graph.AdjacencyList`
@@ -821,7 +823,6 @@ _A full graph-analytics library (centralities, communities, flows, isomorphism).
 - [ ] `Graph.Merge`
 - [ ] `Graph.MergeVertices`
 - [ ] `Graph.MeshData`
-- [ ] `Graph.MetricDistance`
 - [ ] `Graph.MinimumSpanningTree`
 - [ ] `Graph.NavigationGraph`
 - [ ] `Graph.Neigborhood`
@@ -841,7 +842,6 @@ _A full graph-analytics library (centralities, communities, flows, isomorphism).
 - [ ] `Graph.SubGraphMatches`
 - [ ] `Graph.Subgraph`
 - [ ] `Graph.Tietze`
-- [ ] `Graph.TopologicalDistance`
 - [ ] `Graph.Tree`
 - [ ] `Graph.Triples`
 - [ ] `Graph.VertexByKeyValue`

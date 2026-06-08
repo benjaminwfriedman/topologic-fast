@@ -256,6 +256,59 @@ def _install_geometry_extras(ns):
     Cell.Decompose = staticmethod(Cell_Decompose)
 
 
+def _install_merge_and_graph(ns):
+    """Topology.SelfMerge/Merge and Graph topological/metric distances."""
+    import topologic_fast as tf
+    Topology, CellComplex, Shell, Wire, Cluster, Graph = (
+        ns.Topology, ns.CellComplex, ns.Shell, ns.Wire, ns.Cluster, ns.Graph)
+
+    def _merge_subtopologies(cells, faces, edges, verts):
+        if cells:
+            return CellComplex.ByCells(cells)
+        if faces:
+            return Shell.ByFaces(faces)
+        if edges:
+            return Wire.ByEdges(edges)
+        if verts:
+            return Cluster.ByVertices(verts)
+        return None
+
+    def Topology_SelfMerge(topology, transferDictionaries=False, ontology=False,
+                           tolerance=0.0001, silent=False):
+        if isinstance(topology, tf.Cluster):
+            merged = _merge_subtopologies(
+                list(topology.Cells()), list(topology.Faces()),
+                list(topology.Edges()), list(topology.Vertices()))
+            return merged if merged is not None else topology
+        return topology
+
+    def Topology_Merge(topologyA, topologyB, tranDict=False, tolerance=0.0001, silent=False):
+        cells = Topology.Cells(topologyA) + Topology.Cells(topologyB)
+        if cells:
+            return CellComplex.ByCells(cells)
+        faces = Topology.Faces(topologyA) + Topology.Faces(topologyB)
+        if faces:
+            return Shell.ByFaces(faces)
+        edges = Topology.Edges(topologyA) + Topology.Edges(topologyB)
+        if edges:
+            return Wire.ByEdges(edges)
+        return topologyA
+
+    def Graph_TopologicalDistance(graph, vertexA, vertexB, tolerance=0.0001):
+        return graph.Distance(vertexA, vertexB, tolerance)
+
+    def Graph_MetricDistance(graph, vertexA, vertexB, mantissa=6, tolerance=0.0001):
+        path = graph.Path(vertexA, vertexB, tolerance)
+        if path is None:
+            return None
+        return round(path.Length(None), mantissa)
+
+    Topology.SelfMerge = staticmethod(Topology_SelfMerge)
+    Topology.Merge = staticmethod(Topology_Merge)
+    Graph.TopologicalDistance = staticmethod(Graph_TopologicalDistance)
+    Graph.MetricDistance = staticmethod(Graph_MetricDistance)
+
+
 def _install_booleans(ns):
     """topologicpy-signature boolean ops over tf's fast kernel booleans."""
     Topology = ns.Topology
@@ -468,5 +521,6 @@ def install(namespace):
     _install_edge_extras(namespace)
     _install_vertex_extras(namespace)
     _install_geometry_extras(namespace)
+    _install_merge_and_graph(namespace)
     _install_booleans(namespace)
     _install_indices_and_topology(namespace)
