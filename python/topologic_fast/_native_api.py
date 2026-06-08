@@ -143,6 +143,94 @@ def _install_cell(Cell):
     _attach(Cell, {"Volume": Volume, "Area": Area, "Compactness": Compactness})
 
 
+def _install_vertex_extras(ns):
+    """Pure-geometry topologicpy-compatible Vertex predicates/helpers."""
+    Vertex, Topology = ns.Vertex, ns.Topology
+
+    def IsCoincident(vertexA, vertexB, tolerance=0.0001, silent=False):
+        return _coincident(vertexA, vertexB, tolerance)
+
+    def Centroid(vertices, mantissa=6):
+        n = len(vertices)
+        if n == 0:
+            return None
+        sx = sy = sz = 0.0
+        for v in vertices:
+            x, y, z = v.Coordinates()
+            sx += x
+            sy += y
+            sz += z
+        # topologicpy stores the exact average (mantissa applies on read, not here).
+        return Vertex.ByCoordinates(sx / n, sy / n, sz / n)
+
+    def AreCollinear(vertices, mantissa=6, tolerance=0.0001):
+        pts = [v.Coordinates() for v in vertices]
+        if len(pts) < 3:
+            return True
+        a = pts[0]
+        # find a base direction from the first distinct pair
+        base = None
+        for p in pts[1:]:
+            d = (p[0] - a[0], p[1] - a[1], p[2] - a[2])
+            if math.sqrt(d[0] ** 2 + d[1] ** 2 + d[2] ** 2) > tolerance:
+                base = d
+                break
+        if base is None:
+            return True
+        for p in pts[1:]:
+            d = (p[0] - a[0], p[1] - a[1], p[2] - a[2])
+            cx = base[1] * d[2] - base[2] * d[1]
+            cy = base[2] * d[0] - base[0] * d[2]
+            cz = base[0] * d[1] - base[1] * d[0]
+            if math.sqrt(cx ** 2 + cy ** 2 + cz ** 2) > tolerance:
+                return False
+        return True
+
+    def AreCoplanar(vertices, mantissa=6, tolerance=0.0001, silent=False):
+        pts = [v.Coordinates() for v in vertices]
+        if len(pts) < 4:
+            return True
+        a = pts[0]
+        # normal from the first non-collinear triple
+        normal = None
+        for i in range(1, len(pts)):
+            for j in range(i + 1, len(pts)):
+                u = (pts[i][0] - a[0], pts[i][1] - a[1], pts[i][2] - a[2])
+                w = (pts[j][0] - a[0], pts[j][1] - a[1], pts[j][2] - a[2])
+                nx = u[1] * w[2] - u[2] * w[1]
+                ny = u[2] * w[0] - u[0] * w[2]
+                nz = u[0] * w[1] - u[1] * w[0]
+                if math.sqrt(nx ** 2 + ny ** 2 + nz ** 2) > tolerance:
+                    normal = (nx, ny, nz)
+                    break
+            if normal:
+                break
+        if normal is None:
+            return True
+        nl = math.sqrt(sum(c * c for c in normal))
+        for p in pts:
+            d = ((p[0] - a[0]) * normal[0] + (p[1] - a[1]) * normal[1] + (p[2] - a[2]) * normal[2]) / nl
+            if abs(d) > tolerance:
+                return False
+        return True
+
+    def NearestVertex(vertex, topology, useKDTree=True, mantissa=6):
+        vx, vy, vz = vertex.Coordinates()
+        best, best_d = None, None
+        for cand in Topology.Vertices(topology):
+            cx, cy, cz = cand.Coordinates()
+            d = (vx - cx) ** 2 + (vy - cy) ** 2 + (vz - cz) ** 2
+            if best_d is None or d < best_d:
+                best, best_d = cand, d
+        return best
+
+    Vertex.IsCoincident = staticmethod(IsCoincident)
+    Vertex.Centroid = staticmethod(Centroid)
+    Vertex.AreCollinear = staticmethod(AreCollinear)
+    Vertex.AreCoplanar = staticmethod(AreCoplanar)
+    Vertex.NearestVertex = staticmethod(NearestVertex)
+
+
 def _install_edge_extras(ns):
     """Remaining topologicpy-compatible Edge methods (Line, NormalEdge, etc.)."""
     Edge, Vertex, Cluster, Topology = ns.Edge, ns.Vertex, ns.Cluster, ns.Topology
@@ -372,4 +460,5 @@ def install(namespace):
     _install_constructors(namespace)
     _install_shapes(namespace)
     _install_edge_extras(namespace)
+    _install_vertex_extras(namespace)
     _install_indices_and_topology(namespace)

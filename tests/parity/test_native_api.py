@@ -110,6 +110,30 @@ def test_index_and_issame_match():
     assert tf.Topology.IsSame(e, tf.Edge.ByStartVertexEndVertex(fvs[0], fvs[2])) is False
 
 
+def test_vertex_predicates_match():
+    from topologicpy.Vertex import Vertex as TV2
+
+    def fmk(cs):
+        return [tf.Vertex.ByCoordinates(*c) for c in cs]
+
+    def tmk(cs):
+        return [TV2.ByCoordinates(*c) for c in cs]
+
+    collinear = [[(0, 0, 0), (1, 1, 1), (2, 2, 2)], [(0, 0, 0), (1, 0, 0), (0, 1, 0)]]
+    for cs in collinear:
+        assert tf.Vertex.AreCollinear(fmk(cs)) == TV2.AreCollinear(tmk(cs))
+    coplanar = [[(0, 0, 0), (1, 0, 0), (0, 1, 0), (1, 1, 0)],
+                [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)]]
+    for cs in coplanar:
+        assert tf.Vertex.AreCoplanar(fmk(cs)) == TV2.AreCoplanar(tmk(cs))
+    assert tf.Vertex.IsCoincident(tf.Vertex.ByCoordinates(1, 1, 1), tf.Vertex.ByCoordinates(1, 1, 1.00001)) \
+        == TV2.IsCoincident(TV2.ByCoordinates(1, 1, 1), TV2.ByCoordinates(1, 1, 1.00001)) is True
+    cs = [(0, 0, 0), (2, 0, 0), (0, 3, 0)]
+    assert tf.Vertex.Coordinates(tf.Vertex.Centroid(fmk(cs))) == TV2.Coordinates(TV2.Centroid(tmk(cs)))
+    nv = tf.Vertex.NearestVertex(tf.Vertex.ByCoordinates(0.1, 0.1, 0.1), tf.Cell.Box(0, 0, 0, 2, 2, 2))
+    assert tf.Vertex.Coordinates(nv) == [0.0, 0.0, 0.0]
+
+
 def test_edge_extras_match():
     from topologicpy.Edge import Edge as TE2
     assert _vset(tf.Edge.Line(length=2, direction=[1, 0, 0])) == \
