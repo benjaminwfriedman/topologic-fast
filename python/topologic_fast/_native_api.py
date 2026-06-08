@@ -269,6 +269,25 @@ def _install_edge_extras(ns):
     Edge.ExternalBoundary = hybridmethod(Edge_ExternalBoundary)
 
 
+def _install_booleans(ns):
+    """topologicpy-signature boolean ops over tf's fast kernel booleans."""
+    Topology = ns.Topology
+    _union, _diff, _inter = Topology.Union, Topology.Difference, Topology.Intersection
+
+    def Union(topologyA, topologyB, tranDict=False, tolerance=0.0001, silent=False):
+        return _union(topologyA, topologyB)
+
+    def Difference(topologyA, topologyB, tranDict=False, tolerance=0.0001, silent=False):
+        return _diff(topologyA, topologyB)
+
+    def Intersect(topologyA, topologyB, tranDict=False, tolerance=0.0001, silent=False):
+        return _inter(topologyA, topologyB)
+
+    Topology.Union = staticmethod(Union)
+    Topology.Difference = staticmethod(Difference)
+    Topology.Intersect = staticmethod(Intersect)  # topologicpy's name for Intersection
+
+
 def _install_indices_and_topology(ns):
     """Index lookups (Vertex/Edge) and Topology.IsSame — pure-Python helpers."""
     Vertex, Edge, Topology = ns.Vertex, ns.Edge, ns.Topology
@@ -461,4 +480,5 @@ def install(namespace):
     _install_shapes(namespace)
     _install_edge_extras(namespace)
     _install_vertex_extras(namespace)
+    _install_booleans(namespace)
     _install_indices_and_topology(namespace)

@@ -110,6 +110,16 @@ def test_index_and_issame_match():
     assert tf.Topology.IsSame(e, tf.Edge.ByStartVertexEndVertex(fvs[0], fvs[2])) is False
 
 
+def test_boolean_ops():
+    fa, fb = tf.Cell.Box(0, 0, 0, 2, 2, 2), tf.Cell.Box(1, 0, 0, 2, 2, 2)
+    assert round(tf.Topology.Union(fa, fb).Volume(), 3) == 12.0
+    # topologicpy signature (extra tranDict/tolerance/silent args) accepted
+    assert round(tf.Topology.Union(fa, fb, False, 0.0001).Volume(), 3) == 12.0
+    assert round(tf.Topology.Difference(fa, fb).Volume(), 3) == 4.0
+    assert round(tf.Topology.Intersect(fa, fb).Volume(), 3) == 4.0  # topologicpy name
+    assert round(tf.Topology.Intersection(fa, fb).Volume(), 3) == 4.0  # tf-native name
+
+
 def test_vertex_predicates_match():
     from topologicpy.Vertex import Vertex as TV2
 
