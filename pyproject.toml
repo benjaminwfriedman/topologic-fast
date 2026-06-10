@@ -39,6 +39,9 @@ manifest-path = "crates/topologic-py/Cargo.toml"
 # Ship the EnergyModel assets (OSM template / EPW weather / DDY design days)
 # used as defaults by topologic_fast.Energy.
 include = [
+    # PKG-INFO declares `License-File: LICENSE`; PyPI rejects the sdist unless
+    # the file is actually bundled. Ship it explicitly.
+    { path = "LICENSE", format = ["sdist", "wheel"] },
     { path = "python/topologic_fast/assets/**/*", format = ["sdist", "wheel"] },
 ]
 
