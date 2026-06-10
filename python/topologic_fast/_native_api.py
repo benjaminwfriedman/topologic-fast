@@ -321,6 +321,10 @@ def _install_merge_and_graph(ns):
     import topologic_fast as tf
     Topology, CellComplex, Shell, Wire, Cluster, Graph = (
         ns.Topology, ns.CellComplex, ns.Shell, ns.Wire, ns.Cluster, ns.Graph)
+    Edge, Dictionary = ns.Edge, ns.Dictionary
+    # The native (Rust) dual-graph builder, before we wrap it with the full
+    # topologicpy signature below.
+    _native_bytopology = Graph.ByTopology
 
     def _merge_subtopologies(cells, faces, edges, verts):
         if cells:
@@ -378,8 +382,101 @@ def _install_merge_and_graph(ns):
             return None
         return round(path.Length(None), mantissa)
 
+    def Graph_ByTopology(topology, direct=True, directApertures=False,
+                         viaSharedTopologies=False, viaSharedApertures=False,
+                         toExteriorTopologies=False, toExteriorApertures=False,
+                         toContents=False, toOutposts=False,
+                         idKey="TOPOLOGIC_ID", outpostsKey="outposts",
+                         vertexCategoryKey="category", edgeCategoryKey="category",
+                         useInternalVertex=False, storeBREP=False, ontology=True,
+                         mantissa=6, tolerance=0.0001, silent=False):
+        """Create a dual graph from a topology (topologicpy-compatible signature).
+
+        For a CellComplex this builds the cell-dual graph in Python so that the
+        aperture-traversal flags can take effect: ``direct`` connects cells that
+        share *any* face (adjacency), while ``directApertures`` connects only
+        cells that share a face carrying an aperture (access). Each cell's
+        dictionary is transferred onto its representative graph vertex.
+
+        ``useInternalVertex`` is accepted for compatibility; tf has no internal-
+        vertex primitive, so the cell centroid is used as the representative
+        point (interior for convex cells; graph *structure* is unaffected).
+        All other keyword arguments are accepted for drop-in compatibility.
+        """
+        # Only CellComplex carries the aperture/dictionary semantics that differ
+        # from the native builder; everything else delegates to the fast kernel.
+        if not isinstance(topology, tf.CellComplex):
+            return _native_bytopology(topology, direct, viaSharedTopologies,
+                                      toExteriorTopologies, tolerance)
+
+        cc = topology
+        cells = list(cc.Cells())
+
+        def _rep_vertex(cell, index):
+            v = Topology.Centroid(cell)
+            try:
+                src = Topology.Dictionary(cell)
+                keys = list(src.Keys()) if src else []
+                vals = list(src.Values()) if src else []
+            except Exception:
+                keys, vals = [], []
+            try:
+                v = Topology.SetDictionary(
+                    v, Dictionary.ByKeysValues(keys + ["index"], vals + [index]))
+            except Exception:
+                pass
+            return v
+
+        reps = {}
+        rep_list = []
+        for i, cell in enumerate(cells):
+            rv = _rep_vertex(cell, i)
+            reps[Topology.UUID(cell)] = rv
+            rep_list.append(rv)
+
+        edges = []
+        extra_verts = []
+        seen = set()
+
+        def _connect(ua, ub):
+            if ua == ub:
+                return
+            key = (ua, ub) if ua < ub else (ub, ua)
+            if key in seen:
+                return
+            seen.add(key)
+            edges.append(Edge.ByVertices(reps[ua], reps[ub]))
+
+        def _connect_via(ua, ub, node):
+            extra_verts.append(node)
+            edges.append(Edge.ByVertices(reps[ua], node))
+            edges.append(Edge.ByVertices(reps[ub], node))
+
+        for f in cc.Faces():
+            adj = list(f.Cells(cc))
+            has_aperture = bool(_APERTURES.get(Topology.UUID(f)))
+            if len(adj) == 2:
+                ua, ub = Topology.UUID(adj[0]), Topology.UUID(adj[1])
+                if ua not in reps or ub not in reps:
+                    continue
+                if direct or (directApertures and has_aperture):
+                    _connect(ua, ub)
+                if viaSharedTopologies or (viaSharedApertures and has_aperture):
+                    _connect_via(ua, ub, Topology.Centroid(f))
+            elif len(adj) == 1:
+                ua = Topology.UUID(adj[0])
+                if ua not in reps:
+                    continue
+                if toExteriorTopologies or (toExteriorApertures and has_aperture):
+                    bnode = Topology.Centroid(f)
+                    extra_verts.append(bnode)
+                    edges.append(Edge.ByVertices(reps[ua], bnode))
+
+        return Graph.ByVerticesEdges(rep_list + extra_verts, edges)
+
     Topology.SelfMerge = staticmethod(Topology_SelfMerge)
     Topology.Merge = staticmethod(Topology_Merge)
+    Graph.ByTopology = staticmethod(Graph_ByTopology)
     Graph.TopologicalDistance = staticmethod(Graph_TopologicalDistance)
     Graph.MetricDistance = staticmethod(Graph_MetricDistance)
     Graph.ClosenessCentrality = staticmethod(Graph_ClosenessCentrality)
