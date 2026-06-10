@@ -243,15 +243,34 @@ impl Shell {
             return 0.0;
         }
 
-        // Divergence theorem: V = (1/3) * sum(face_centroid · face_normal * face_area)
+        // Divergence theorem: V = (1/3) * sum(face_centroid · face_normal * face_area).
+        // Face normals come from wire winding, which is not guaranteed to be
+        // consistently outward — e.g. a face shared with another cell (merged in
+        // CellComplex::by_cells) keeps the winding of its canonical owner. We
+        // therefore orient each face's normal outward relative to an interior
+        // reference point (the mean of the face centroids), which is correct for
+        // the convex / star-shaped cells produced by the constructors and a
+        // no-op when the winding is already consistent.
         let faces = Self::faces(store, handle);
-        let mut volume = 0.0;
+        if faces.is_empty() {
+            return 0.0;
+        }
 
-        for face in faces {
-            if let Some(normal) = Face::normal(store, face) {
-                let center = Face::center_of_mass(store, face);
-                let area = Face::area(store, face);
-                volume += center.dot(normal) * area;
+        let centers: Vec<Point3> = faces.iter().map(|f| Face::center_of_mass(store, *f)).collect();
+        let mut reference = Point3::ZERO;
+        for c in &centers {
+            reference += *c;
+        }
+        reference = reference / (centers.len() as f64);
+
+        let mut volume = 0.0;
+        for (face, center) in faces.iter().zip(centers.iter()) {
+            if let Some(normal) = Face::normal(store, *face) {
+                let area = Face::area(store, *face);
+                // Flip the contribution if this face's normal points inward.
+                let outward = center.dot(normal) - reference.dot(normal);
+                let sign = if outward < 0.0 { -1.0 } else { 1.0 };
+                volume += sign * center.dot(normal) * area;
             }
         }
 

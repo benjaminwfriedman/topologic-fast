@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
@@ -59,7 +59,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -72,14 +72,13 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install maturin
-        run: pip install maturin
-
-      - name: Build and install package
-        run: maturin develop --release
-
       - name: Install test dependencies
         run: pip install pytest pytest-benchmark
+
+      - name: Build and install package
+        # `maturin develop` needs an active virtualenv (absent on CI); building
+        # and installing the wheel via the maturin backend works without one.
+        run: pip install .
 
       - name: Run tests
         run: pytest tests/ -v

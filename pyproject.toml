@@ -36,6 +36,11 @@ features = ["pyo3/extension-module"]
 python-source = "python"
 module-name = "topologic_fast"
 manifest-path = "crates/topologic-py/Cargo.toml"
+# Ship the EnergyModel assets (OSM template / EPW weather / DDY design days)
+# used as defaults by topologic_fast.Energy.
+include = [
+    { path = "python/topologic_fast/assets/**/*", format = ["sdist", "wheel"] },
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,2 +1,4 @@
 [toolchain]
-channel = "1.75.0"
+# 1.75 cannot parse the version-4 Cargo.lock in this repo (needs >= 1.78);
+# track stable, consistent with the CI dtolnay/rust-toolchain@stable step.
+channel = "stable"
