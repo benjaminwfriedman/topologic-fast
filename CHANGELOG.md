@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.1
+
+### Fixed
+- **`Graph.ByTopology` is now a true topologicpy drop-in.** It previously used a
+  truncated snake_case signature (`direct`, `via_shared_topologies`,
+  `to_exterior_topologies`, `tolerance`), so topologicpy-style calls passing
+  `directApertures=`, `viaSharedTopologies=`, `useInternalVertex=`, etc. raised
+  `TypeError`. The full topologicpy keyword signature is now accepted.
+- **Apertures can drive connectivity.** For a `CellComplex`, `directApertures`
+  connects only cells that share a face carrying an aperture (the *access*
+  graph), distinct from `direct`, which connects cells sharing *any* face (the
+  *adjacency* graph). `viaSharedTopologies`/`viaSharedApertures`/
+  `toExteriorTopologies`/`toExteriorApertures` are likewise honored.
+- Each cell's dictionary is transferred onto its representative graph vertex
+  (with a stable `index` key), matching topologicpy.
+
+`useInternalVertex` is accepted for compatibility; tf has no internal-vertex
+primitive, so the cell centroid is used as the representative point (interior
+for convex cells; graph structure is unaffected).
+
 ## 0.2.0
 
 A large compatibility + correctness release. topologic_fast now mirrors much of

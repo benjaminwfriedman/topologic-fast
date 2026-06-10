@@ -233,6 +233,42 @@ def test_merge_and_graph_distances():
     assert tf.Graph.MetricDistance(g, vs[0], vs[2]) == 2.0
 
 
+def test_graph_bytopology_topologicpy_signature():
+    # Regression: Graph.ByTopology must accept topologicpy's exact keyword
+    # signature (camelCase + aperture/internal-vertex flags). Previously it
+    # only accepted snake_case (direct/via_shared_topologies/...) and a
+    # downstream connectivity.py call raised TypeError -> every metric was 0.
+    cc = tf.CellComplex.ByCells([tf.Cell.Box(0, 0, 0, 2, 2, 2),
+                                 tf.Cell.Box(0, 0, 2, 2, 2, 2)])
+    g = tf.Graph.ByTopology(cc, direct=True, directApertures=True,
+                            viaSharedTopologies=True, useInternalVertex=True,
+                            storeBREP=False, mantissa=6, tolerance=0.0001)
+    assert g is not None
+
+    # Adjacency graph (direct) connects the two stacked cells.
+    gadj = tf.Graph.ByTopology(cc, direct=True)
+    assert tf.Graph.TopologicalDistance(gadj, *list(gadj.Vertices())[:2]) == 1
+
+    # Access graph (direct=False, directApertures=True): isolated until a door
+    # aperture sits on the shared internal face, then connected.
+    internal = [f for f in cc.Faces() if len(list(f.Cells(cc))) == 2][0]
+    gnodoor = tf.Graph.ByTopology(cc, direct=False, directApertures=True)
+    assert gnodoor.AdjacencyList() == [[], []]
+    tf.Topology.AddApertures(cc, [tf.Face.Rectangle(tf.Topology.Centroid(internal), 0.4, 0.4)])
+    gdoor = tf.Graph.ByTopology(cc, direct=False, directApertures=True)
+    assert all(adj for adj in gdoor.AdjacencyList())
+
+    # Cell dictionaries are transferred onto representative graph vertices.
+    b1 = tf.Topology.SetDictionary(tf.Cell.Box(0, 0, 0, 2, 2, 2),
+                                   tf.Dictionary.ByKeysValues(["name"], ["kitchen"]))
+    cc2 = tf.CellComplex.ByCells([b1, tf.Cell.Box(0, 0, 2, 2, 2, 2)])
+    g2 = tf.Graph.ByTopology(cc2, direct=True)
+    names = {tf.Topology.Dictionary(v).ValueAtKey("name")
+             for v in g2.Vertices()
+             if tf.Topology.Dictionary(v) and tf.Topology.Dictionary(v).Contains("name")}
+    assert "kitchen" in names
+
+
 def test_decompose_matches():
     from topologicpy.CellComplex import CellComplex as TCC
     from topologicpy.Cell import Cell as TC3
