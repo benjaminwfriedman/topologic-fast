@@ -127,3 +127,6 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+          # Make re-runs idempotent: if some files already uploaded (e.g. a prior
+          # partial failure), skip them instead of failing the whole job.
+          skip-existing: true
